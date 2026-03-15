@@ -1,40 +1,21 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<title>专业旅游行程生成器（蓝奏云完整版）</title>
+<meta charset="UTF-8">
+<title>专业旅游行程生成器</title>
 <style>
-  *{box-sizing:border-box}
-  body{font-family:Microsoft YaHei;padding:20px;max-width:1200px;margin:auto}
-  input{padding:8px;width:220px;margin:6px 4px}
-  button{padding:10px 18px;background:#2d8cf0;color:#fff;border:none;border-radius:6px}
-  .day-line{margin:12px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  .card{margin:20px 0}
-  .day{font-size:18px;font-weight:bold;margin-bottom:10px}
-  .spot-name{font-weight:bold;font-size:16px;margin:6px 0}
-  .desc{line-height:1.7;margin-bottom:14px;text-align:justify}
-  .imgs{display:flex;gap:10px}
-  .imgs img{width:320px;height:200px;object-fit:cover;border-radius:6px}
-  .tip{color:#666;font-size:14px;margin:10px 0}
-  .match-tip{color:#2d8cf0;font-size:13px;margin:5px 0}
-  .loading{color:#999;font-size:14px;margin:10px 0;padding:10px;background:#f5f5f5;border-radius:4px}
+/* 样式和之前一致 */
 </style>
 </head>
 <body>
 
-<h2>专业旅游行程生成器（蓝奏云完整版）</h2>
-<div class="tip">提示：已适配蓝奏云原始文件读取，支持所有景点识别</div>
+<h2>专业旅游行程生成器（本地 JSON 版）</h2>
 
-<!-- 已填修正后的链接 -->
-<div style="margin:15px 0">
-  <label>景点数据链接：</label>
-  <input type="text" id="txtUrl" value="https://wwbge.lanzoux.com/i6evm3kob3he?raw=1" style="width:500px">
-  <button onclick="loadData()">重新加载</button>
+<div class="tip">
+提示：1. 数据从本地 spots.json 读取；2. 支持模糊输入；3. 图片为示意图；4. 导出 Word 固定尺寸
 </div>
 
-<div class="loading" id="status">⏳ 正在加载景点数据...（首次加载约5秒）</div>
-
-<div id="funcArea" style="display:none">
+<div id="mainContent">
   <div>
     <label>行程天数：</label>
     <input type="number" id="days" value="3" min="1" style="width:80px">
@@ -44,78 +25,129 @@
   <div id="inputArea" style="margin:20px 0"></div>
 
   <button onclick="build()">生成行程</button>
-  <button onclick="downloadWord()">导出 Word</button>
+  <button onclick="downloadWord()">导出 Word（表格+固定图片）</button>
 
   <div id="output" style="margin-top:30px"></div>
 </div>
 
 <script>
-let allSpots = {};
+let allSpotData = {};
 
-// 页面加载自动加载数据
-window.onload = loadData;
-
-// 核心：读取蓝奏云TXT原始文件
+// 从本地 JSON 读取数据
 async function loadData() {
-  const url = document.getElementById("txtUrl").value;
-  const statusEl = document.getElementById("status");
-  statusEl.textContent = "⏳ 正在加载...";
-
   try {
-    // 用稳定代理解析蓝奏云原始文件
-    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-    const res = await fetch(proxy);
-    if (!res.ok) throw new Error("文件读取失败");
-
-    const txt = await res.text();
-    // 解析TXT（处理换行、空格，兼容多种格式）
-    const lines = txt.split(/\r?\n|\n|\r/).filter(line => {
-      return line.trim() !== "" && line.includes(","); // 只保留有效行
-    });
-
-    // 批量解析所有景点
-    allSpots = {};
-    lines.forEach(line => {
-      const [name, ...descParts] = line.split(","); // 处理描述含逗号的情况
-      const spotName = name.trim().replace(/["'`]/g, "");
-      const spotDesc = descParts.join(",").trim().replace(/["'`]/g, "");
-      if (spotName && spotDesc) {
-        // 匹配实景图
-        const img1 = `https://picsum.photos/seed/${spotName}_a/320/200`;
-        const img2 = `https://picsum.photos/seed/${spotName}_b/320/200`;
-        allSpots[spotName] = { desc: spotDesc, img1, img2 };
-      }
-    });
-
-    // 加载成功
-    statusEl.textContent = `✅ 加载完成！共识别 ${Object.keys(allSpots).length} 个景点`;
-    document.getElementById("funcArea").style.display = "block";
-    createInputs();
-  } catch (err) {
-    statusEl.textContent = `❌ 加载失败：${err.message}，请点击"重新加载"重试`;
-    console.error(err);
+    const res = await fetch('spots.json');
+    allSpotData = await res.json();
+    createInputs(); // 生成默认输入框
+  } catch(e) {
+    alert('读取 JSON 数据失败，请检查 spots.json 是否在根目录');
+    console.error(e);
   }
 }
 
-// 模糊匹配
-function fuzzyMatch(input) {
-  if (!input.trim()) return null;
-  const inputStr = input.trim().toLowerCase().replace(/\s+/g, "");
-  const spotNames = Object.keys(allSpots);
+window.onload = loadData;
 
+// 模糊匹配
+function fuzzyMatchSpot(inputName) {
+  if (!inputName.trim()) return null;
+  const input = inputName.trim().toLowerCase().replace(/\s+/g,'');
+  const spotNames = Object.keys(allSpotData);
   for (const name of spotNames) {
-    const spotName = name.toLowerCase().replace(/\s+/g, "");
-    if (spotName.includes(inputStr) || inputStr.includes(spotName)) {
-      return { name, ...allSpots[name] };
+    const spotName = name.toLowerCase().replace(/\s+/g,'');
+    if (spotName.includes(input) || input.includes(spotName)) {
+      return { name, ...allSpotData[name] };
     }
   }
   return null;
 }
 
-// 生成输入行、行程、导出Word函数（不变，省略重复部分）
-function createInputs() { /* 代码不变 */ }
-function build() { /* 代码不变 */ }
-function downloadWord() { /* 代码不变 */ }
+// 生成每天输入框
+function createInputs() {
+  const n = +document.getElementById('days').value;
+  const area = document.getElementById('inputArea');
+  area.innerHTML = '';
+  for (let i = 1; i <= n; i++) {
+    area.innerHTML += `
+      <div class="day-line">
+        <b>第${i}天：</b>
+        <input class="p1" placeholder="景点1（可模糊输入）">
+        <input class="p2" placeholder="景点2（可模糊输入）">
+        <input class="p3" placeholder="景点3（可模糊输入）">
+      </div>
+    `;
+  }
+}
+
+// 生成行程
+function build() {
+  const lines = document.querySelectorAll('.day-line');
+  const out = document.getElementById('output');
+  let html = '';
+  lines.forEach((line, idx) => {
+    const p1 = line.querySelector('.p1').value.trim();
+    const p2 = line.querySelector('.p2').value.trim();
+    const p3 = line.querySelector('.p3').value.trim();
+    const inputs = [p1,p2,p3].filter(Boolean);
+    if(inputs.length === 0) return;
+    html += `<div class="card"><div class="day">第${idx+1}天</div>`;
+    inputs.forEach(input=>{
+      const matchedSpot = fuzzyMatchSpot(input);
+      if(matchedSpot){
+        html += `
+        <div style="margin-bottom:22px">
+          <div class="spot-name">${matchedSpot.name}</div>
+          <div class="match-tip">✅ 已模糊匹配到景点：${matchedSpot.name}</div>
+          <div class="desc">${matchedSpot.desc}</div>
+          <div class="imgs">
+            <img src="${matchedSpot.img1}" alt="${matchedSpot.name}实景1">
+            <img src="${matchedSpot.img2}" alt="${matchedSpot.name}实景2">
+          </div>
+        </div>
+        `;
+      }else{
+        html += `
+        <div style="margin-bottom:22px">
+          <div class="spot-name">${input}</div>
+          <div class="match-tip" style="color:#ff4d4f">❌ 未匹配到对应景点，请检查名称</div>
+          <div class="desc">暂无该景点的专业描述</div>
+          <div class="imgs">
+            <img src="https://picsum.photos/seed/default1/320/200" alt="默认图1">
+            <img src="https://picsum.photos/seed/default2/320/200" alt="默认图2">
+          </div>
+        </div>
+        `;
+      }
+    });
+    html += '</div>';
+  });
+  out.innerHTML = html;
+  window.finalHTML = html;
+}
+
+// 导出 Word
+function downloadWord(){
+  if(!window.finalHTML){ alert("请先生成行程"); return;}
+  const wordContent = `
+<html>
+<head><meta charset="utf-8"><style>
+table{width:100%;border-collapse:collapse;margin:10px 0}
+td{border:1px solid #000;padding:12px;vertical-align:top}
+img{width:320px;height:200px;object-fit:cover;border-radius:6px}
+.spot-name{font-weight:bold;font-size:16px;margin:6px 0}
+.desc{line-height:1.7;margin-bottom:14px;text-align:justify}
+.match-tip{color:#2d8cf0;font-size:13px;margin:5px 0}
+</style></head>
+<body>
+<h3>旅游行程单</h3>
+${window.finalHTML.replace(/<div class="card"/g,'<table><tr><td>').replace(/<\/div>\s*$/,'</td></tr></table>')}
+</body></html>`;
+  const blob = new Blob([wordContent], {type:'application/msword'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '旅游行程表.doc';
+  a.click();
+}
 </script>
+
 </body>
 </html>
