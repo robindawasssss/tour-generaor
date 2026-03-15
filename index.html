@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <title>旅游行程</title>
-
 <style>
 body{font-family:Microsoft YaHei;max-width:1100px;margin:auto;padding:20px;}
 .card{margin:20px 0;border-bottom:1px solid #ddd;padding-bottom:20px;}
@@ -11,25 +10,25 @@ body{font-family:Microsoft YaHei;max-width:1100px;margin:auto;padding:20px;}
 .desc{line-height:1.7;margin:6px 0;}
 .imgs{display:flex;gap:10px;margin:6px 0;}
 .imgs img{width:320px;height:200px;object-fit:cover;border-radius:6px;}
-button{padding:8px 16px;margin:10px 0;background:#2d8cf0;color:white;border:none;border-radius:6px;cursor:pointer;}
 </style>
 </head>
-
 <body>
 
 <h2>旅游行程</h2>
 <div id="output"></div>
-<button id="exportBtn">导出 Word</button>
 
 <script>
 let spotData={}, imageData={}, spotNames=[], finalHTML="";
 
+// 加载景点数据和图片数据
 async function loadData(){
     const spots = await fetch("spots.json").then(r=>r.json());
     const images = await fetch("images.json").then(r=>r.json());
 
+    // 图片对应景点
     images.forEach(i=>imageData[i.name]=i.imageUrl);
 
+    // 整理景点信息
     spots.forEach(s=>{
         spotData[s.name]={ content:s.content, img:imageData[s.name]||"https://picsum.photos/320/200?random="+Math.random() }
     });
@@ -38,6 +37,7 @@ async function loadData(){
     buildFromUrl();
 }
 
+// 模糊匹配景点
 function fuzzyMatch(name){
     for(let k in spotData){
         if(k.includes(name)||name.includes(k)) return {name:k,...spotData[k]};
@@ -45,6 +45,7 @@ function fuzzyMatch(name){
     return null;
 }
 
+// 根据 URL hash 生成行程
 function buildFromUrl(){
     const params=new URLSearchParams(location.hash.substring(1));
     if(!params.toString()) return;
@@ -58,10 +59,9 @@ function buildFromUrl(){
         spots.forEach((s,i)=>{
             const spot=fuzzyMatch(s);
             if(!spot){ html+=`<div>${s}</div>`; return; }
+            // 图片规则：单景点或前两个景点显示两张图片
             let imgs="";
-            if(spots.length==1||i<2){
-                imgs=`<div class="imgs"><img src="${spot.img}"><img src="${spot.img}"></div>`;
-            }
+            if(spots.length===1||i<2){ imgs=`<div class="imgs"><img src="${spot.img}"><img src="${spot.img}"></div>`; }
             html+=`<div class="spot-name">${spot.name}</div><div class="desc">${spot.content}</div>${imgs}`;
         });
         html+="</div>";
@@ -69,11 +69,14 @@ function buildFromUrl(){
 
     document.getElementById("output").innerHTML=html;
     finalHTML=html;
+
+    // 自动导出 Word
+    autoExportWord();
 }
 
-// 导出 Word
-document.getElementById("exportBtn").onclick=function(){
-    if(!finalHTML){ alert("暂无行程可导出"); return; }
+// 自动生成 Word 并下载
+function autoExportWord(){
+    if(!finalHTML) return;
     const wordContent=`
 <html>
 <head>
@@ -99,8 +102,8 @@ ${finalHTML.replace(/<div class="card"/g,'<table><tr><td>').replace(/<\/div>\s*$
     a.click();
 }
 
+// 初始化
 loadData();
 </script>
-
 </body>
 </html>
