@@ -3,53 +3,112 @@
 <head>
 <meta charset="utf-8">
 <title>旅游行程生成器</title>
+
 <style>
-body{font-family:Microsoft YaHei;max-width:1100px;margin:auto;padding:20px}
-input{padding:8px;width:220px;margin:6px}
-button{padding:8px 16px;margin:6px;background:#2d8cf0;color:#fff;border:none;border-radius:6px;cursor:pointer}
-.day-line{margin:10px 0}
-.card{margin:20px 0;border-bottom:1px solid #ddd;padding-bottom:20px}
-.spot-name{font-weight:bold;font-size:16px;margin:6px 0}
-.desc{line-height:1.7;margin:6px 0}
-.imgs{display:flex;gap:10px}
-.imgs img{width:320px;height:200px;object-fit:cover;border-radius:6px}
-.loading{color:#888;margin:10px 0}
+
+body{
+font-family:Microsoft YaHei;
+max-width:1100px;
+margin:auto;
+padding:20px;
+}
+
+input{
+padding:8px;
+width:200px;
+margin:6px;
+}
+
+button{
+padding:8px 16px;
+margin:6px;
+background:#2d8cf0;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.day-line{
+margin:10px 0;
+}
+
+.suggest{
+background:#fff;
+border:1px solid #ddd;
+width:200px;
+position:absolute;
+z-index:10;
+}
+
+.suggest div{
+padding:6px;
+cursor:pointer;
+}
+
+.suggest div:hover{
+background:#eee;
+}
+
+.card{
+margin:20px 0;
+border-bottom:1px solid #ddd;
+padding-bottom:20px;
+}
+
+.spot-name{
+font-weight:bold;
+font-size:16px;
+margin:6px 0;
+}
+
+.desc{
+line-height:1.7;
+margin:6px 0;
+}
+
+.imgs{
+display:flex;
+gap:10px;
+}
+
+.imgs img{
+width:320px;
+height:200px;
+object-fit:cover;
+border-radius:6px;
+}
+
 </style>
 </head>
 
 <body>
 
 <h2>旅游行程生成器</h2>
-<div class="loading" id="loading">加载数据中...</div>
 
-<div id="main" style="display:none">
-
-<label>行程天数：</label>
+<label>行程天数</label>
 <input type="number" id="days" value="3">
+
 <button onclick="createInputs()">生成输入框</button>
+<button onclick="build()">生成行程</button>
+<button onclick="makeLink()">生成分享链接</button>
 
 <div id="inputArea"></div>
 
-<button onclick="build()">生成行程</button>
+<hr>
 
 <div id="output"></div>
-
-</div>
 
 <script>
 
 let spotData={}
 let imageData={}
+let spotNames=[]
 
 async function loadData(){
 
-try{
-
-const spotRes=await fetch('spots.json')
-const spots=await spotRes.json()
-
-const imgRes=await fetch('images.json')
-const images=await imgRes.json()
+const spots=await fetch("spots.json").then(r=>r.json())
+const images=await fetch("images.json").then(r=>r.json())
 
 images.forEach(i=>{
 imageData[i.name]=i.imageUrl
@@ -59,43 +118,23 @@ spots.forEach(s=>{
 
 spotData[s.name]={
 content:s.content,
-img:imageData[s.name]||null
+img:imageData[s.name]||"https://picsum.photos/320/200?random="+Math.random()
 }
 
 })
 
-document.getElementById("loading").innerText="数据加载完成："+Object.keys(spotData).length+" 个景点"
-document.getElementById("main").style.display="block"
+spotNames=Object.keys(spotData)
 
 createInputs()
 
-}catch(e){
-
-document.getElementById("loading").innerText="加载失败："+e
-
-}
-
-}
-
-function fuzzyMatch(name){
-
-const keys=Object.keys(spotData)
-
-for(let k of keys){
-
-if(k.includes(name)||name.includes(k)){
-return {name:k,...spotData[k]}
-}
-
-}
-
-return null
+buildFromUrl()
 
 }
 
 function createInputs(){
 
-const n=+document.getElementById("days").value
+const n=document.getElementById("days").value
+
 const area=document.getElementById("inputArea")
 
 area.innerHTML=""
@@ -104,31 +143,91 @@ for(let i=1;i<=n;i++){
 
 area.innerHTML+=`
 <div class="day-line">
-第${i}天：
-<input class="p1" placeholder="景点1">
-<input class="p2" placeholder="景点2">
-<input class="p3" placeholder="景点3">
+第${i}天
+<div>
+<input class="spotInput">
+<div class="suggest"></div>
+<input class="spotInput">
+<div class="suggest"></div>
+<input class="spotInput">
+<div class="suggest"></div>
+</div>
 </div>
 `
 
 }
+
+bindSuggest()
+
+}
+
+function bindSuggest(){
+
+document.querySelectorAll(".spotInput").forEach(input=>{
+
+const box=input.nextElementSibling
+
+input.addEventListener("input",()=>{
+
+const v=input.value.trim()
+
+if(v.length<1){
+
+box.innerHTML=""
+return
+
+}
+
+const list=spotNames.filter(n=>n.includes(v)).slice(0,6)
+
+box.innerHTML=list.map(n=>`<div>${n}</div>`).join("")
+
+box.querySelectorAll("div").forEach(i=>{
+
+i.onclick=()=>{
+
+input.value=i.innerText
+box.innerHTML=""
+
+}
+
+})
+
+})
+
+})
+
+}
+
+function fuzzyMatch(name){
+
+for(let k in spotData){
+
+if(k.includes(name)||name.includes(k)){
+
+return {name:k,...spotData[k]}
+
+}
+
+}
+
+return null
 
 }
 
 function build(){
 
 const lines=document.querySelectorAll(".day-line")
+
 const out=document.getElementById("output")
 
 let html=""
 
 lines.forEach((line,i)=>{
 
-const p1=line.querySelector(".p1").value
-const p2=line.querySelector(".p2").value
-const p3=line.querySelector(".p3").value
-
-const arr=[p1,p2,p3].filter(Boolean)
+const arr=[...line.querySelectorAll("input")]
+.map(x=>x.value.trim())
+.filter(Boolean)
 
 if(arr.length===0)return
 
@@ -139,31 +238,31 @@ arr.forEach((a,idx)=>{
 const s=fuzzyMatch(a)
 
 if(!s){
-html+=`<div>${a} 未找到</div>`
+
+html+=`<div>${a}</div>`
 return
+
 }
 
-let imgHtml=""
+let imgs=""
 
 if(arr.length===1||idx<2){
 
-const img=s.img||"https://picsum.photos/320/200?random="+Math.random()
-
-imgHtml=`
+imgs=`
 <div class="imgs">
-<img src="${img}">
-<img src="${img}">
+<img src="${s.img}">
+<img src="${s.img}">
 </div>
 `
 
 }
 
 html+=`
-<div>
+
 <div class="spot-name">${s.name}</div>
 <div class="desc">${s.content}</div>
-${imgHtml}
-</div>
+${imgs}
+
 `
 
 })
@@ -173,6 +272,92 @@ html+="</div>"
 })
 
 out.innerHTML=html
+
+}
+
+function makeLink(){
+
+const lines=document.querySelectorAll(".day-line")
+
+let params=[]
+
+lines.forEach((line,i)=>{
+
+const arr=[...line.querySelectorAll("input")]
+.map(x=>x.value.trim())
+.filter(Boolean)
+
+if(arr.length){
+
+params.push("d"+(i+1)+"="+arr.join(","))
+
+}
+
+})
+
+const url=location.origin+location.pathname+"?"+params.join("&")
+
+prompt("复制链接",url)
+
+}
+
+function buildFromUrl(){
+
+const params=new URLSearchParams(location.search)
+
+if(!params.toString()) return
+
+let html=""
+
+params.forEach((v,k)=>{
+
+if(!k.startsWith("d")) return
+
+const day=k.replace("d","")
+
+const spots=v.split(",")
+
+html+=`<div class="card"><h3>第${day}天</h3>`
+
+spots.forEach((s,i)=>{
+
+const spot=fuzzyMatch(s)
+
+if(!spot){
+
+html+=`<div>${s}</div>`
+return
+
+}
+
+let imgs=""
+
+if(spots.length==1||i<2){
+
+imgs=`
+<div class="imgs">
+<img src="${spot.img}">
+<img src="${spot.img}">
+</div>
+`
+
+}
+
+html+=`
+
+<div class="spot-name">${spot.name}</div>
+<div class="desc">${spot.content}</div>
+${imgs}
+
+`
+
+})
+
+html+="</div>"
+
+})
+
+document.getElementById("output").innerHTML=html
 
 }
 
