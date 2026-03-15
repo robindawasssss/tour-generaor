@@ -1,0 +1,157 @@
+let allSpotData = {}; // 存储景点数据
+
+    // 页面加载时读取 JSON 数据
+    window.onload = function() {
+      loadData();
+    };
+
+    async function loadData() {
+      const response = await fetch('spots.json');
+      allSpotData = await response.json();
+      document.getElementById('loadingStatus').innerText = `? 数据加载完成，共 ${Object.keys(allSpotData).length} 个景点。`;
+      createInputs(); // 默认生成3天
+      document.getElementById('mainContent').style.display = 'block';
+    }
+
+    // 生成输入行
+    function createInputs() {
+      const n = +document.getElementById("days").value;
+      const area = document.getElementById("inputArea");
+      area.innerHTML = "";
+      for (let i = 1; i <= n; i++) {
+        area.innerHTML += `
+          <div class="day-line">
+            <b>第${i}天：</b>
+            <input class="p1" placeholder="景点1（可模糊输入）">
+            <input class="p2" placeholder="景点2（可模糊输入）">
+            <input class="p3" placeholder="景点3（可模糊输入）">
+          </div>
+        `;
+      }
+    }
+
+    // 模糊匹配
+    function fuzzyMatchSpot(inputName) {
+      if (!inputName.trim()) return null;
+      const input = inputName.trim().toLowerCase().replace(/\s+/g, '');
+      const spotNames = Object.keys(allSpotData);
+
+      let bestMatch = null;
+      let bestScore = 0;
+
+      for (const name of spotNames) {
+        const spotName = name.toLowerCase().replace(/\s+/g, '');
+        let score = similarity(input, spotName);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = name;
+        }
+      }
+
+      if (bestScore > 0.3) { // 设定匹配阈值
+        return { name: bestMatch, ...allSpotData[bestMatch] };
+      }
+      return null;
+    }
+
+    // 简单相似度计算
+    function similarity(a, b) {
+      a = a.toLowerCase();
+      b = b.toLowerCase();
+      let longer = a.length > b.length ? a : b;
+      let shorter = a.length > b.length ? b : a;
+      let same = 0;
+      for (let i = 0; i < shorter.length; i++) {
+        if (longer.includes(shorter[i])) same++;
+      }
+      return same / longer.length;
+    }
+
+    // 生成行程
+    function build() {
+      const lines = document.querySelectorAll(".day-line");
+      const out = document.getElementById("output");
+      let html = "";
+
+      lines.forEach((line, idx) => {
+        const p1 = line.querySelector(".p1").value.trim();
+        const p2 = line.querySelector(".p2").value.trim();
+        const p3 = line.querySelector(".p3").value.trim();
+        const inputs = [p1, p2, p3].filter(Boolean);
+
+        if (inputs.length === 0) return;
+
+        html += `<div class="card"><div class="day">第${idx + 1}天</div>`;
+
+        inputs.forEach(input => {
+          const matchedSpot = fuzzyMatchSpot(input);
+          if (matchedSpot) {
+            html += `
+              <div style="margin-bottom:22px">
+                <div class="spot-name">${matchedSpot.name}</div>
+                <div class="match-tip">? 已匹配到景点：${matchedSpot.name}</div>
+                <div class="desc">${matchedSpot.desc}</div>
+                <div class="imgs">
+                  <img src="${matchedSpot.img1}" alt="${matchedSpot.name}实景1" onerror="this.src='https://picsum.photos/seed/default1/320/200'">
+                  <img src="${matchedSpot.img2}" alt="${matchedSpot.name}实景2" onerror="this.src='https://picsum.photos/seed/default2/320/200'">
+                </div>
+              </div>
+            `;
+          } else {
+            html += `
+              <div style="margin-bottom:22px">
+                <div class="spot-name">${input}</div>
+                <div class="match-tip" style="color:#ff4d4f">? 未匹配到对应景点，请检查名称</div>
+                <div class="desc">暂无该景点的描述</div>
+                <div class="imgs">
+                  <img src="https://picsum.photos/seed/default1/320/200" alt="默认图1">
+                  <img src="https://picsum.photos/seed/default2/320/200" alt="默认图2">
+                </div>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+      });
+
+      out.innerHTML = html;
+      window.finalHTML = html; // 保存生成内容用于导出
+    }
+
+    // 导出 Word 表格
+    function downloadWord() {
+      if (!window.finalHTML) {
+        alert("请先生成行程");
+        return;
+      }
+
+      const wordContent = `
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            table{width:100%; border-collapse:collapse; margin:10px 0}
+            td{border:1px solid #000; padding:12px; vertical-align:top}
+            img{width:320px; height:200px; object-fit:cover; border-radius:6px}
+            .spot-name{font-weight:bold; font-size:16px; margin:6px 0}
+            .desc{line-height:1.7; margin-bottom:14px; text-align:justify}
+            .match-tip{color:#2d8cf0; font-size:13px; margin:5px 0}
+          </style>
+        </head>
+        <body>
+          <h3>旅游行程单</h3>
+          ${window.finalHTML.replace(/<div class="card"/g, '<table><tr><td>')
+                             .replace(/<\/div>\s*$/, '</td></tr></table>')}
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([wordContent], { type: "application/msword" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "旅游行程表.doc";
+      a.click();
+    }
+  </script>
+</body>
+</html>
