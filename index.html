@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>旅游行程</title>
+<title>旅游行程生成器</title>
 <style>
 body{font-family:Microsoft YaHei;max-width:1100px;margin:auto;padding:20px;}
 .card{margin:20px 0;border-bottom:1px solid #ddd;padding-bottom:20px;}
@@ -10,31 +10,45 @@ body{font-family:Microsoft YaHei;max-width:1100px;margin:auto;padding:20px;}
 .desc{line-height:1.7;margin:6px 0;}
 .imgs{display:flex;gap:10px;margin:6px 0;}
 .imgs img{width:320px;height:200px;object-fit:cover;border-radius:6px;}
+#controls{margin-bottom:20px;}
+input{padding:6px 10px;width:100px;margin-right:10px;}
+button{padding:8px 16px;margin-right:10px;background:#2d8cf0;color:white;border:none;border-radius:6px;cursor:pointer;}
 </style>
 </head>
 <body>
 
 <h2>旅游行程</h2>
+
+<!-- 输入控件 -->
+<div id="controls">
+  <label>行程天数：</label>
+  <input type="number" id="days" value="3" min="1">
+  <button id="generateBtn">生成行程</button>
+  <button id="exportBtn">导出 Word</button>
+</div>
+
+<!-- 行程输出 -->
 <div id="output"></div>
 
 <script>
-let spotData={}, imageData={}, spotNames=[], finalHTML="";
+let spotData={}, imageData={}, finalHTML="";
 
-// 加载景点数据和图片数据
+// 加载 JSON 数据
 async function loadData(){
-    const spots = await fetch("spots.json").then(r=>r.json());
-    const images = await fetch("images.json").then(r=>r.json());
+    try{
+        const spots = await fetch("spots.json").then(r=>r.json());
+        const images = await fetch("images.json").then(r=>r.json());
 
-    // 图片对应景点
-    images.forEach(i=>imageData[i.name]=i.imageUrl);
+        images.forEach(i=>imageData[i.name]=i.imageUrl);
 
-    // 整理景点信息
-    spots.forEach(s=>{
-        spotData[s.name]={ content:s.content, img:imageData[s.name]||"https://picsum.photos/320/200?random="+Math.random() }
-    });
+        spots.forEach(s=>{
+            spotData[s.name]={ content:s.content, img:imageData[s.name]||"https://picsum.photos/320/200?random="+Math.random() }
+        });
 
-    spotNames=Object.keys(spotData);
-    buildFromUrl();
+    } catch(e){
+        console.error("JSON 加载失败", e);
+        alert("加载 JSON 数据失败，请检查路径或格式！");
+    }
 }
 
 // 模糊匹配景点
@@ -74,7 +88,19 @@ function buildFromUrl(){
     autoExportWord();
 }
 
-// 自动生成 Word 并下载
+// 手动生成行程
+function generateManual(){
+    const n = +document.getElementById("days").value;
+    if(n<1) return;
+    let html="";
+    for(let i=1;i<=n;i++){
+        html+=`<div class="card"><h3>第${i}天</h3><div>请在 URL hash 中设置景点</div></div>`;
+    }
+    document.getElementById("output").innerHTML=html;
+    finalHTML=html;
+}
+
+// 自动生成 Word
 function autoExportWord(){
     if(!finalHTML) return;
     const wordContent=`
@@ -103,7 +129,22 @@ ${finalHTML.replace(/<div class="card"/g,'<table><tr><td>').replace(/<\/div>\s*$
 }
 
 // 初始化
-loadData();
+window.onload = async function(){
+    await loadData();
+
+    // 如果 URL hash 有参数，隐藏控件并生成行程
+    if(location.hash){
+        document.getElementById("controls").style.display="none";
+        buildFromUrl();
+    } else {
+        document.getElementById("controls").style.display="block";
+    }
+
+    // 绑定手动生成按钮
+    document.getElementById("generateBtn").onclick=generateManual;
+    document.getElementById("exportBtn").onclick=autoExportWord;
+};
 </script>
+
 </body>
 </html>
