@@ -52,11 +52,12 @@ async function loadData() {
   document.body.insertBefore(loadingEl, document.getElementById('mainContent'));
 
   try {
-    const res = await fetch('spots.json');
+    const res = await fetch('spots.json'); // 确保 spots.json 在同目录
     const arr = await res.json();
     allSpotData = {};
+
     arr.forEach(item => {
-      const name = item.id.split(',')[0].trim();
+      const name = item.id.split(',')[0].trim(); // 取id前景点名
       const desc = ((item.name.first || '') + ' ' + (item.name.last || '')).trim();
       allSpotData[name] = {
         desc: desc || '暂无该景点的专业描述',
@@ -64,10 +65,12 @@ async function loadData() {
         img2: `https://picsum.photos/seed/${encodeURIComponent(name)}_2/320/200`
       };
     });
+
     loadingEl.textContent = `✅ 数据加载完成，共 ${Object.keys(allSpotData).length} 个景点`;
     createInputs();
+
   } catch(e) {
-    loadingEl.textContent = `❌ 数据加载失败，请检查 spots.json 是否存在`;
+    loadingEl.textContent = '❌ 数据加载失败，请检查 spots.json 是否存在';
     console.error(e);
   }
 }
