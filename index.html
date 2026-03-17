@@ -226,7 +226,6 @@ return `
 `
 })
 // 每天自动分页
-// 每天自动分页
 content = content.replace(/<div class="card">/g,'<div class="card" style="page-break-after:always;">')
 // 先统一 class，保证后面合并匹配到
 content = content.replace(/class="desc"/g,'class="desc word-desc"')
@@ -266,11 +265,7 @@ content = content.replace(/<div class="card">([\s\S]*?)<\/div>/g, function(card)
     return card;
 });
 
-// 插入到标题里（关键）
-content = content.replace(/<h3>([\s\S]*?)<\/h3>/g, function(match, title){
-    if(!rightText) return `<h3>${title}</h3>`;
 
-   return `<h3 class="day-title"><span style="float:left;">${title}</span><span style="float:right;font-size:14px;font-weight:normal;">${rightText}</span><div style="clear:both;"></div></h3>`;
 
 // 描述缩进
 content=content.replace(/class="desc"/g,'class="desc word-desc"')
