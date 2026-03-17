@@ -258,18 +258,8 @@ let rightText = arr.join("　　");
 content = content.replace(/<h3>([\s\S]*?)<\/h3>/g, function(match, title){
     if(!rightText) return `<h3>${title}</h3>`;
 
-    return `
-    <h3 class="day-title">
-        <span style="float:left;">${title}</span>
-        <span style="float:right;font-size:14px;font-weight:normal;">
-            ${rightText}
-        </span>
-        <div style="clear:both;"></div>
-    </h3>
-    `;
-});
-// 标题样式
-content=content.replace(/<h3>/g,'<h3 class="day-title">')
+   return `<h3 class="day-title"><span style="float:left;">${title}</span><span style="float:right;font-size:14px;font-weight:normal;">${rightText}</span><div style="clear:both;"></div></h3>`;
+
 // 描述缩进
 content=content.replace(/class="desc"/g,'class="desc word-desc"')
 const style=`
