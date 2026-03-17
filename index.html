@@ -237,39 +237,50 @@ content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class
         return `<div class="desc word-desc"><span style="font-weight:bold; color:#2d8cf0;">【${name}】</span>${desc}</div>`;
     }
 );
-content = content.replace(/<div class="card">([\s\S]*?)<\/div>/g, function(card){
+const container = document.createElement("div");
+container.innerHTML = content;
 
-// ✅ 提取
-let meal = (card.match(/<div class="extra-line">\s*用餐[:：]([\s\S]*?)<\/div>/) || [,""])[1];
-let stay = (card.match(/<div class="extra-line">\s*住宿[:：]([\s\S]*?)<\/div>/) || [,""])[1];
-let hotel = (card.match(/<div class="extra-line">\s*酒店[:：]([\s\S]*?)<\/div>/) || [,""])[1];
+container.querySelectorAll(".card").forEach(card => {
 
-// ✅ 删除
-card = card.replace(/<div class="extra-line">\s*用餐[:：][\s\S]*?<\/div>/g,'');
-card = card.replace(/<div class="extra-line">\s*住宿[:：][\s\S]*?<\/div>/g,'');
-card = card.replace(/<div class="extra-line">\s*酒店[:：][\s\S]*?<\/div>/g,'');
+    // 提取
+    let meal = "";
+    let stay = "";
+    let hotel = "";
 
-    // ✅ 组合
+    card.querySelectorAll(".extra-line").forEach(el=>{
+        const text = el.innerText.trim();
+        if(text.startsWith("用餐")) meal = text.replace(/用餐[:：]/,'').trim();
+        if(text.startsWith("住宿")) stay = text.replace(/住宿[:：]/,'').trim();
+        if(text.startsWith("酒店")) hotel = text.replace(/酒店[:：]/,'').trim();
+    });
+
+    // 删除原内容
+    card.querySelectorAll(".extra-line").forEach(el=>el.remove());
+
+    // 组合
     let arr = [];
-    if(meal && meal.trim()) arr.push(`用餐：${meal.trim()}`);
-    if(stay && stay.trim()) arr.push(`住宿：${stay.trim()}`);
-    if(hotel && hotel.trim()) arr.push(`酒店：${hotel.trim()}`);
+    if(meal) arr.push(`用餐：${meal}`);
+    if(stay) arr.push(`住宿：${stay}`);
+    if(hotel) arr.push(`酒店：${hotel}`);
 
     let rightText = arr.join("　　");
 
-    // ✅ 插入标题
-    card = card.replace(/<h3>([\s\S]*?)<\/h3>/, function(match, title){
-        if(!rightText) return `<h3 class="day-title">${title}</h3>`;
+    // 插入标题
+    const h3 = card.querySelector("h3");
+    if(h3){
+        const title = h3.innerText;
 
-        return `<h3 class="day-title">
-        <span style="float:left;">${title}</span>
-        <span style="float:right;font-size:14px;font-weight:normal;">${rightText}</span>
-        <div style="clear:both;"></div>
-        </h3>`;
-    });
+        if(rightText){
+            h3.innerHTML = `
+            <span style="float:left;">${title}</span>
+            <span style="float:right;font-size:14px;font-weight:normal;">${rightText}</span>
+            <div style="clear:both;"></div>`;
+        }
+    }
 
-    return card;
 });
+
+content = container.innerHTML;
 
 
 
