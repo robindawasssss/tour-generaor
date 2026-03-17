@@ -211,25 +211,29 @@ function build(){
     out.innerHTML=html;
 }
 
-// 生成链接
+// ===== 生成链接 =====
 function makeLink(){
     build();
-    const data = btoa(unescape(encodeURIComponent(document.getElementById("output").innerHTML)));
+    const html = document.getElementById("output").innerHTML;
+    // 转 Base64
+    const data = btoa(unescape(encodeURIComponent(html)));
     const url = location.origin + location.pathname + "?view=1&data=" + data;
     prompt("复制链接", url);
 }
 
-// 显示内容
+// ===== 从链接显示 =====
 function buildFromUrl(){
     const params = new URLSearchParams(location.search);
-    if(!params.toString()) return;
     if(params.get("view") !== "1") return;
-    document.querySelector(".top-bar").style.display = "none";
-    document.getElementById("inputArea").style.display = "none";
     const data = params.get("data");
-    if(data){
+    if(!data) return;
+
+    // 确保 DOM 渲染后再赋值
+    window.addEventListener("DOMContentLoaded", ()=>{
+        document.querySelector(".top-bar").style.display = "none";
+        document.getElementById("inputArea").style.display = "none";
         document.getElementById("output").innerHTML = decodeURIComponent(escape(atob(data)));
-    }
+    });
 }
 
 // ===== Word 导出（图片自动缩放适应页面） =====
