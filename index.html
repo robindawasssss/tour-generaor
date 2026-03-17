@@ -237,7 +237,7 @@ content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class
         return `<div class="desc word-desc"><span style="font-weight:bold; color:#2d8cf0;">【${name}】</span>${desc}</div>`;
     }
 );
-
+content = content.replace(/<h3>/g,'<h3 class="day-title">');
 
 
 // 描述缩进
