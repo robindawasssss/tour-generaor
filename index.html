@@ -121,8 +121,6 @@ function createInputs(){
                 </select>
                 <label>住宿</label>
                 <input placeholder="输入住宿">
-                <label>酒店</label>
-                <input placeholder="输入酒店">
             </div>
         </div>`;
     }
@@ -192,7 +190,6 @@ function build(){
         const selects=line.querySelectorAll("select");
         const meals=selects[0].value;
         const stay=line.querySelectorAll("input")[3].value;
-        const hotel=line.querySelectorAll("input")[4].value;
 
         html+=`<div class="card"><h3>第${i+1}天</h3>`;
         arr.forEach((a,idx)=>{
@@ -209,8 +206,7 @@ function build(){
                    <div class="desc">${s.content}</div>${imgs}`;
         });
         html+=`<div class="extra-line">用餐：${meals}</div>
-<div class="extra-line">住宿：${stay}</div>
-<div class="extra-line">酒店：${hotel}</div>`;
+<div class="extra-line">住宿：${stay}</div>`;
         html+="</div>";
     });
     out.innerHTML=html;
