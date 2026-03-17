@@ -205,43 +205,31 @@ function buildFromUrl(){
 
 // ===== Word 导出（图片自动缩放适应页面） =====
 function exportWord(){
-
 let content=document.getElementById("output").innerHTML
-
 // 图片转换为 Word 兼容 table
 content=content.replace(/<div class="imgs">([\s\S]*?)<\/div>/g,function(match){
-
 const imgs=[...match.matchAll(/src="(.*?)"/g)]
-
 if(imgs.length<2) return ""
-
 const img1=imgs[0][1]
 const img2=imgs[1][1]
-
 return `
 <table style="width:100%;margin:8px 0;border-collapse:collapse;">
 <tr>
-
 <td style="width:50%;text-align:center;border:none;">
 <img src="${img1}" width="300" height="130">
 </td>
-
 <td style="width:50%;text-align:center;border:none;">
 <img src="${img2}" width="300" height="130">
 </td>
-
 </tr>
 </table>
 `
 })
-
 // 每天自动分页
 // 每天自动分页
 content = content.replace(/<div class="card">/g,'<div class="card" style="page-break-after:always;">')
-
 // 先统一 class，保证后面合并匹配到
 content = content.replace(/class="desc"/g,'class="desc word-desc"')
-
 // 景点名称 + 描述合并成一行，名称加粗并蓝色
 content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class="desc word-desc">([\s\S]*?)<\/div>/g,
     function(match, name, desc){
@@ -252,21 +240,16 @@ content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class
 content = content.replace(
     /(<div class="extra-line">用餐：([\s\S]*?)<\/div>)?\s*(<div class="extra-line">住宿：([\s\S]*?)<\/div>)?\s*(<div class="extra-line">酒店：([\s\S]*?)<\/div>)?/g,
     function(match, m1, meal, m2, stay, m3, hotel){
-
         let arr = [];
-
         if(meal && meal.trim()){
             arr.push(`用餐：${meal.trim()}`);
         }
-
         if(stay && stay.trim()){
             arr.push(`住宿：${stay.trim()}`);
         }
-
         if(hotel && hotel.trim()){
             arr.push(`酒店：${hotel.trim()}`);
         }
-
         // 全部为空，不显示
         if(arr.length === 0) return "";
 
@@ -275,98 +258,75 @@ content = content.replace(
         </div>`;
     }
 );
-
 // 标题样式
 content=content.replace(/<h3>/g,'<h3 class="day-title">')
-
 // 描述缩进
 content=content.replace(/class="desc"/g,'class="desc word-desc"')
-
 const style=`
 <style>
-
 @page{
 size:A4;
 }
-
 body{
 font-family:SimSun;
 line-height:1.7;
 margin:0;
 }
-
 #word-container{
 width:19.2cm;
 margin-left:-1.2cm;
 }
-
 .day-title{
 background:#2d8cf0;
 color:#fff;
 padding:6px 10px;
 font-size:18px;
 }
-
 .spot-name{
 font-weight:bold;
 font-size:15px;
 margin-top:10px;
 }
-
 .word-desc{
 margin-top:4px;
 text-indent:2em;
 }
-
 .extra-line{
 margin-top:10px;
 padding:6px 8px;
 background:#f6f6f6;
 border-left:3px solid #2d8cf0;
 }
-
 .summary-box{
 margin-bottom:20px;
 padding:10px;
 background:#eef4ff;
 border-left:4px solid #2d8cf0;
 }
-
 </style>
 `
-
 const html=`
 <html>
 <head>
 <meta charset="utf-8">
 ${style}
 </head>
-
 <body>
-
 <div id="word-container">
 ${content}
 </div>
-
 </body>
 </html>
 `
-
 const blob=new Blob(['\ufeff',html],{type:'application/msword'})
-
 const url=URL.createObjectURL(blob)
-
 const a=document.createElement("a")
 a.href=url
 a.download="旅游行程.doc"
-
 document.body.appendChild(a)
 a.click()
-
 document.body.removeChild(a)
-
 }
-
 // ===== 初始化 =====
 loadData();
 </script>
