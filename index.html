@@ -122,18 +122,23 @@ function fuzzyMatch(name){
     name = name.trim();
     if(!name) return null;
 
-    for(let k in spotData){
-        // 检查是否有连续3个字符匹配
-        let matched = false;
-        for(let i=0; i<=name.length-3; i++){
-            const sub = name.substr(i,3); // 当前连续3个字符
-            if(k.includes(sub)){
-                matched = true;
-                break;
+    function commonCharsCount(a, b){
+        const aArr = a.split('');
+        const bArr = b.split('');
+        let count = 0;
+        const used = [];
+        for(let c of aArr){
+            const idx = bArr.findIndex((ch,i)=>ch===c && !used[i]);
+            if(idx !== -1){
+                count++;
+                used[idx] = true;
             }
         }
+        return count;
+    }
 
-        if(matched){
+    for(let k in spotData){
+        if(commonCharsCount(name, k) >= 3){
             return {
                 name: k,
                 content: spotData[k].content,
