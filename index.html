@@ -268,14 +268,18 @@ container.querySelectorAll(".card").forEach(card => {
     // 插入标题
     const h3 = card.querySelector("h3");
     if(h3){
-        const title = h3.innerText;
+        const title = h3.textContent.trim();
 
         if(rightText){
             h3.innerHTML = `
-       <div style="display:flex;justify-content:space-between;align-items:center;">
-       <span>${title}</span>
-       <span style="font-size:14px;font-weight:normal;white-space:nowrap;">${rightText}</span>
-</div>`;
+<table style="width:100%;border-collapse:collapse;">
+<tr>
+<td style="text-align:left;border:none;">${title}</td>
+<td style="text-align:right;font-size:14px;font-weight:normal;border:none;white-space:nowrap;">
+${rightText}
+</td>
+</tr>
+</table>`;
         }
     }
 
