@@ -272,9 +272,10 @@ container.querySelectorAll(".card").forEach(card => {
 
         if(rightText){
             h3.innerHTML = `
-            <span style="float:left;">${title}</span>
-            <span style="float:right;font-size:14px;font-weight:normal;">${rightText}</span>
-            <div style="clear:both;"></div>`;
+       <div style="display:flex;justify-content:space-between;align-items:center;">
+       <span>${title}</span>
+       <span style="font-size:14px;font-weight:normal;white-space:nowrap;">${rightText}</span>
+</div>`;
         }
     }
 
@@ -287,6 +288,12 @@ content = container.innerHTML;
 // 描述缩进
 content=content.replace(/class="desc"/g,'class="desc word-desc"')
 const style=`
+h3{
+font-size:18px;
+font-weight:bold;
+margin:10px 0;
+font-family:SimSun;
+}
 <style>
 @page{
 size:A4;
