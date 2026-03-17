@@ -4,123 +4,95 @@
 <meta charset="utf-8">
 <title>旅游行程生成器</title>
 
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
 <style>
 
 body{
-font-family:Microsoft YaHei;
-max-width:1100px;
-margin:auto;
-padding:20px;
+font-family:"Microsoft YaHei";
+background:#f5f7fa;
+margin:0;
+padding:30px;
+}
+
+h2{margin-bottom:20px;}
+
+.top-bar{
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:20px;
 }
 
 input,select{
 padding:8px;
-width:200px;
-margin:6px;
+border:1px solid #dcdfe6;
+border-radius:6px;
 }
 
 button{
 padding:8px 16px;
-margin:6px;
-background:#2d8cf0;
-color:white;
+background:#409eff;
+color:#fff;
 border:none;
 border-radius:6px;
 cursor:pointer;
 }
 
-.day-line{
-margin:12px 0;
-}
-
-.suggest{
-background:#fff;
-border:1px solid #ddd;
-width:200px;
-position:absolute;
-z-index:10;
-}
-
-.suggest div{
-padding:6px;
-cursor:pointer;
-}
-
-.suggest div:hover{
-background:#eee;
-}
+button.secondary{background:#67c23a;}
+button.gray{background:#909399;}
 
 .card{
-margin:20px 0;
-border-bottom:1px solid #ddd;
-padding-bottom:20px;
+background:#fff;
+border-radius:10px;
+padding:20px;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-.spot-name{
-font-weight:bold;
-font-size:16px;
-margin:6px 0;
-}
+.day-title{font-weight:bold;margin-bottom:10px;}
 
-.desc{
-line-height:1.7;
-margin:6px 0;
-}
+.row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.row input{flex:1;min-width:150px;}
 
-.imgs{
-display:flex;
-gap:10px;
-}
-
-.imgs img{
-width:320px;
-height:200px;
-object-fit:cover;
-border-radius:6px;
-}
+.inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 
 .summary-box{
+background:#eef4ff;
+padding:15px;
+border-radius:10px;
 margin-bottom:20px;
-padding:12px;
-background:#f3f7ff;
-border-left:5px solid #2d8cf0;
+text-align:center;
 }
 
-.route-line{
-font-size:16px;
-font-weight:bold;
-margin-bottom:6px;
+.cover img{
+width:100%;
+height:260px;
+object-fit:cover;
+border-radius:10px;
+margin-bottom:20px;
 }
 
-.daycount-line{
-font-size:14px;
-margin-bottom:6px;
+.outline,.extra-box{
+background:#fff;
+padding:15px;
+border-radius:10px;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-.highlight-line{
-font-size:14px;
-color:#444;
+#output{
+max-width:800px;
+margin:auto;
 }
 
-.extra-box{
-margin-top:8px;
-}
-
-.extra-box input{
-width:180px;
-}
-
-.extra-line{
-margin-top:12px;
-padding:10px;
-background:#f6f6f6;
-border-left:4px solid #2d8cf0;
-line-height:1.6;
-font-size:14px;
-}
-
-.dayTitle{
-width:240px;
+#qrcodeBox{
+display:none;
+text-align:center;
+margin-top:20px;
+border-top:1px dashed #ddd;
+padding-top:15px;
 }
 
 </style>
@@ -130,487 +102,197 @@ width:240px;
 
 <h2>旅游行程生成器</h2>
 
+<div class="top-bar">
 <label>行程天数</label>
 <input type="number" id="days" value="3">
-
 <button onclick="createInputs()">生成输入框</button>
-<button onclick="build()">生成行程</button>
-<button onclick="makeLink()">生成分享链接</button>
-<button onclick="exportWord()">导出Word</button>
+
+<div style="flex:1"></div>
+
+<button class="secondary" onclick="build()">生成行程</button>
+<button class="gray" onclick="makeLink()">生成链接</button>
+<button onclick="exportImage()">生成长图</button>
+</div>
 
 <div id="inputArea"></div>
-
 <hr>
-
 <div id="output"></div>
+
+<!-- 二维码 -->
+<div id="qrcodeBox">
+<canvas id="qrcode"></canvas>
+<div style="margin-top:10px;color:#666;">
+XXX旅行社<br>
+咨询电话：13800000000
+</div>
+</div>
 
 <script>
 
-let spotData={}
-let imageData={}
-let spotNames=[]
-
-async function loadData(){
-
-const spots=await fetch("spots.json").then(r=>r.json())
-const images=await fetch("images.json").then(r=>r.json())
-
-images.forEach(i=>{
-imageData[i.name]=i.imageUrl
-})
-
-spots.forEach(s=>{
-
-spotData[s.name]={
-content:s.content,
-img:imageData[s.name]||"https://picsum.photos/320/200?random="+Math.random()
-}
-
-})
-
-spotNames=Object.keys(spotData)
-
-createInputs()
-
-buildFromUrl()
-
-}
-
 function createInputs(){
-
 const n=document.getElementById("days").value
 const area=document.getElementById("inputArea")
 area.innerHTML=""
 
 for(let i=1;i<=n;i++){
-
 area.innerHTML+=`
+<div class="card">
 
-<div class="day-line">
+<div class="day-title">第${i}天</div>
 
-第${i}天
-<input class="dayTitle" placeholder="如：上海—绍兴">
+<div class="row">
+<input placeholder="如：上海 → 杭州">
+</div>
 
-<div>
+<div class="row">
+<input><input><input>
+</div>
 
-<input class="spotInput">
-<div class="suggest"></div>
-
-<input class="spotInput">
-<div class="suggest"></div>
-
-<input class="spotInput">
-<div class="suggest"></div>
-
-<div class="extra-box">
-
-用餐：
-<select class="mealInput">
-<option value="">选择</option>
-<option value="早">早</option>
-<option value="早/中">早 / 中</option>
-<option value="早/晚">早 / 晚</option>
-<option value="早/中/晚">早 / 中 / 晚</option>
-<option value="自理">自理</option>
+<div class="inline">
+<label>用餐</label>
+<select>
+<option>选择</option>
+<option>早</option>
+<option>中</option>
+<option>晚</option>
 </select>
 
-住宿：<input class="stayInput" placeholder="如：绍兴">
+<label>住宿</label>
+<input>
 
-酒店：<input class="hotelInput" placeholder="如：绍兴国际大酒店">
-
+<label>酒店</label>
+<input>
 </div>
 
-</div>
 </div>
 `
-
 }
-
-bindSuggest()
-
-}
-
-function bindSuggest(){
-
-document.querySelectorAll(".spotInput").forEach(input=>{
-
-const box=input.nextElementSibling
-
-input.addEventListener("input",()=>{
-
-const v=input.value.trim()
-
-if(v.length<1){
-box.innerHTML=""
-return
-}
-
-const list=spotNames.filter(n=>n.includes(v)).slice(0,6)
-
-box.innerHTML=list.map(n=>`<div>${n}</div>`).join("")
-
-box.querySelectorAll("div").forEach(i=>{
-i.onclick=()=>{
-input.value=i.innerText
-box.innerHTML=""
-}
-})
-
-})
-
-})
-
-}
-
-function fuzzyMatch(name){
-
-for(let k in spotData){
-
-if(k.includes(name)||name.includes(k)){
-return {name:k,...spotData[k]}
-}
-
-}
-
-return null
-
 }
 
 function build(){
 
-const lines=document.querySelectorAll(".day-line")
+const cards=document.querySelectorAll(".card")
 const out=document.getElementById("output")
 
 let html=""
-let route=[]
-let highlights=[]
-let dayCount=0
+let routes=[]
 
-lines.forEach((line,i)=>{
+cards.forEach((card,i)=>{
 
-dayCount++
+const inputs=card.querySelectorAll("input")
+const selects=card.querySelectorAll("select")
 
-const title=line.querySelector(".dayTitle")?.value.trim()
+const route=inputs[0].value
+const spots=[inputs[1].value,inputs[2].value,inputs[3].value].filter(Boolean)
+const meal=selects[0].value
+const stay=inputs[4].value
+const hotel=inputs[5].value
 
-if(title){
-const parts=title.split(/-|—|→/)
-parts.forEach(p=>{
-const t=p.trim()
-if(t && !route.includes(t)){
-route.push(t)
-}
+if(route) routes.push(route)
+
+html+=`<div class="card"><h3>第${i+1}天</h3>`
+
+if(route) html+=`<div><b>${route}</b></div>`
+
+spots.forEach(s=>{
+html+=`<div>${s}</div>`
 })
-}
-
-const arr=[...line.querySelectorAll(".spotInput")]
-.map(x=>x.value.trim())
-.filter(Boolean)
-
-if(arr.length===0)return
-
-html+=`<div class="card"><h3>第${i+1}天 ${title||""}</h3>`
-
-arr.forEach((a,idx)=>{
-
-const s=fuzzyMatch(a)
-
-if(!s){
-html+=`<div>${a}</div>`
-return
-}
-
-if(!highlights.includes(s.name)){
-highlights.push(s.name)
-}
-
-let imgs=""
-
-if(arr.length===1||idx<2){
-
-imgs=`
-<div class="imgs">
-<img src="${s.img}">
-<img src="${s.img}">
-</div>
-`
-
-}
 
 html+=`
-
-<div class="spot-name">${s.name}</div>
-<div class="desc">${s.content}</div>
-${imgs}
-
-`
-
-})
-
-const meal=line.querySelector(".mealInput")?.value.trim()
-const stay=line.querySelector(".stayInput")?.value.trim()
-const hotel=line.querySelector(".hotelInput")?.value.trim()
-
-if(meal||stay||hotel){
-
-html+=`
-<div class="extra-line">
-${meal?`用餐：${meal}<br>`:""}
-${stay?`住宿：${stay}<br>`:""}
-${hotel?`酒店：${hotel}`:""}
+<div>用餐：${meal}</div>
+<div>住宿：${stay}</div>
+<div>酒店：${hotel}</div>
 </div>
 `
-
-}
-
-html+="</div>"
-
 })
 
-const nights=Math.max(dayCount-1,0)
-
-let highlightHTML=""
-
-if(highlights.length){
-highlightHTML=`<div class="highlight-line">行程亮点：${highlights.slice(0,5).join(" · ")}</div>`
+let title=""
+if(routes.length){
+title=routes[0]+"等地 "+cards.length+"天"+(cards.length-1)+"晚行程"
 }
 
-if(route.length){
+let summary=""
+routes.forEach((r,i)=>{
+summary+=`<div>D${i+1}：${r}</div>`
+})
 
-html=
+out.innerHTML=`
 
-`<div class="summary-box">
-
-<div class="route-line">
-行程概览：${route.join(" → ")}
+<div class="cover">
+<img src="https://picsum.photos/1200/400">
 </div>
 
-<div class="daycount-line">
-行程天数：${dayCount}天${nights}晚
+<div class="summary-box">
+<h2>${title}</h2>
+<div style="color:#666;">精品旅游行程推荐</div>
 </div>
 
-${highlightHTML}
+<div class="outline">
+<h3>行程概览</h3>
+${summary}
+</div>
 
-</div>`
+${html}
 
-+html
+<div class="extra-box">
+<h3>费用说明</h3>
+<div>✔ 含：住宿、交通、导游</div>
+<div>✘ 不含：个人消费</div>
+</div>
 
-}
-
-out.innerHTML=html
-
+<div class="extra-box">
+<h3>温馨提示</h3>
+<div>请携带身份证，注意安全</div>
+</div>
+`
 }
 
 function makeLink(){
-
-const lines=document.querySelectorAll(".day-line")
-
-let params=[]
-
-lines.forEach((line,i)=>{
-
-const arr=[...line.querySelectorAll(".spotInput")]
-.map(x=>x.value.trim())
-.filter(Boolean)
-
-if(arr.length){
-params.push("d"+(i+1)+"="+arr.join(","))
-}
-
-})
-
-const url=location.origin+location.pathname+"?"+params.join("&")
-
+build()
+const data=encodeURIComponent(document.getElementById("output").innerHTML)
+const url=location.origin+location.pathname+"?view=1&data="+data
 prompt("复制链接",url)
-
 }
 
-function buildFromUrl(){
-
-const params=new URLSearchParams(location.search)
-
-if(!params.toString()) return
-
-let html=""
-
-params.forEach((v,k)=>{
-
-if(!k.startsWith("d")) return
-
-const day=k.replace("d","")
-
-const spots=v.split(",")
-
-html+=`<div class="card"><h3>第${day}天</h3>`
-
-spots.forEach((s,i)=>{
-
-const spot=fuzzyMatch(s)
-
-if(!spot){
-html+=`<div>${s}</div>`
-return
+function checkView(){
+const p=new URLSearchParams(location.search)
+if(p.get("view")==="1"){
+document.querySelector(".top-bar").style.display="none"
+document.getElementById("inputArea").style.display="none"
+document.getElementById("output").innerHTML=decodeURIComponent(p.get("data"))
+}
 }
 
-let imgs=""
+function exportImage(){
 
-if(spots.length==1||i<2){
+build()
 
-imgs=`
-<div class="imgs">
-<img src="${spot.img}">
-<img src="${spot.img}">
-</div>
-`
+const el=document.getElementById("output")
+const qrBox=document.getElementById("qrcodeBox")
+const canvasEl=document.getElementById("qrcode")
 
-}
+const data=encodeURIComponent(el.innerHTML)
+const url=location.origin+location.pathname+"?view=1&data="+data
 
-html+=`
+QRCode.toCanvas(canvasEl,url,function(){
 
-<div class="spot-name">${spot.name}</div>
-<div class="desc">${spot.content}</div>
-${imgs}
+qrBox.style.display="block"
+el.appendChild(qrBox)
 
-`
+html2canvas(el,{scale:2,useCORS:true}).then(canvas=>{
+const link=document.createElement("a")
+link.download="行程海报.png"
+link.href=canvas.toDataURL()
+link.click()
 
+qrBox.style.display="none"
 })
 
-html+="</div>"
-
 })
-
-document.getElementById("output").innerHTML=html
-
-}
-function exportWord(){
-
-let content=document.getElementById("output").innerHTML
-
-// 图片转换为 Word 兼容 table
-content=content.replace(/<div class="imgs">([\s\S]*?)<\/div>/g,function(match){
-
-const imgs=[...match.matchAll(/src="(.*?)"/g)]
-
-if(imgs.length<2) return ""
-
-const img1=imgs[0][1]
-const img2=imgs[1][1]
-
-return `
-<table style="width:100%;margin:8px 0;border-collapse:collapse;">
-<tr>
-
-<td style="width:50%;text-align:center;border:none;">
-<img src="${img1}" width="340" height="130">
-</td>
-
-<td style="width:50%;text-align:center;border:none;">
-<img src="${img2}" width="340" height="130">
-</td>
-
-</tr>
-</table>
-`
-})
-
-// 每天自动分页
-content=content.replace(/<div class="card">/g,'<div class="card" style="page-break-after:always;">')
-
-// 标题样式
-content=content.replace(/<h3>/g,'<h3 class="day-title">')
-
-// 描述缩进
-content=content.replace(/class="desc"/g,'class="desc word-desc"')
-
-const style=`
-<style>
-
-@page Section1{
-size:595.3pt 841.9pt;
-margin:50pt 50pt 50pt 65pt;
 }
 
-div.Section1{
-page:Section1;
-}
-
-body{
-font-family:SimSun;
-line-height:1.7;
-margin:0;
-}
-
-#word-container{
-width:20.5cm;
-margin-left:-1cm;
-}
-
-.day-title{
-background:#2d8cf0;
-color:#fff;
-padding:6px 10px;
-font-size:18px;
-}
-
-.spot-name{
-font-weight:bold;
-font-size:15px;
-margin-top:10px;
-}
-
-.word-desc{
-margin-top:4px;
-text-indent:2em;
-}
-
-.extra-line{
-margin-top:10px;
-padding:6px 8px;
-background:#f6f6f6;
-border-left:3px solid #2d8cf0;
-}
-
-</style>
-`
-
-const html=`
-<html xmlns:o="urn:schemas-microsoft-com:office:office"
-xmlns:w="urn:schemas-microsoft-com:office:word"
-xmlns="http://www.w3.org/TR/REC-html40">
-
-<head>
-<meta charset="utf-8">
-${style}
-</head>
-
-<body>
-
-<div class="Section1">
-<div id="word-container">
-
-${content}
-
-</div>
-</div>
-
-</body>
-</html>
-`
-
-const blob=new Blob(['\ufeff',html],{type:'application/msword'})
-
-const url=URL.createObjectURL(blob)
-
-const a=document.createElement("a")
-a.href=url
-a.download="旅游行程.doc"
-
-document.body.appendChild(a)
-a.click()
-
-document.body.removeChild(a)
-
-}
-loadData()
+createInputs()
+checkView()
 
 </script>
 
