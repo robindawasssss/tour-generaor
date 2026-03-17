@@ -21,6 +21,27 @@ button.gray{background:#909399;}
 .suggest{background:#fff;border:1px solid #ddd;position:absolute;z-index:10;width:200px;}
 .suggest div{padding:6px;cursor:pointer;}
 .suggest div:hover{background:#eee;}
+    /* ===== A4 居中布局 ===== */
+body{
+    background:#e5e7eb;
+    padding:0;   /* 覆盖你原来的30px */
+}
+
+/* 外层居中 */
+.page-wrap{
+    display:flex;
+    justify-content:center;
+    padding:30px 0;
+}
+
+/* 白色编辑区 */
+.editor{
+    width:900px;              /* 推荐 800~1000 */
+    background:#fff;
+    padding:25px 30px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    border-radius:8px;
+}
 </style>
 </head>
 <body>
