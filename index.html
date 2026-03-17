@@ -211,37 +211,32 @@ function build(){
     out.innerHTML=html;
 }
 
-// 生成链接
-function makeLink(){
-    build(); // 先生成行程内容
-    const html = document.getElementById("output").innerHTML;
-    const data = btoa(unescape(encodeURIComponent(html))); // 转 Base64
-    const url = location.origin + location.pathname + "?view=1&data=" + data;
-    prompt("复制链接", url);
-}
-
-// 从链接显示行程
+// ===== 分享链接显示 =====
 function buildFromUrl(){
     const params = new URLSearchParams(location.search);
-    if(params.get("view") !== "1") return; // 非分享模式，直接返回
+    if(!params.toString()) return;         // 没有参数直接返回
+    if(params.get("view") !== "1") return; // 不是分享模式也返回
+
+    // 隐藏输入区和按钮
+    const topBar = document.querySelector(".top-bar");
+    if(topBar) topBar.style.display = "none";
+    const inputArea = document.getElementById("inputArea");
+    if(inputArea) inputArea.style.display = "none";
+
+    // 显示分享的行程内容
     const data = params.get("data");
-    if(!data) return;
+    if(data){
+        try{
+            document.getElementById("output").innerHTML = decodeURIComponent(escape(atob(data)));
+        }catch(e){
+            console.error("分享数据解析失败", e);
+            document.getElementById("output").innerHTML = "<p>分享数据损坏或无法解析</p>";
+        }
+    }
 
-    // 等 DOM 渲染完成再处理
-    window.addEventListener("DOMContentLoaded", ()=>{
-        // 隐藏输入界面
-        const topBar = document.querySelector(".top-bar");
-        const inputArea = document.getElementById("inputArea");
-        if(topBar) topBar.style.display = "none";
-        if(inputArea) inputArea.style.display = "none";
-
-        // 显示行程
-        const output = document.getElementById("output");
-        if(output) output.innerHTML = decodeURIComponent(escape(atob(data)));
-
-        // 可选：自动滚动到内容
-        output.scrollIntoView({behavior:"smooth"});
-    });
+    // 可以给页面加个样式，让输出区域居中或宽度固定
+    const editor = document.querySelector(".editor");
+    if(editor) editor.style.padding = "20px 40px";
 }
 
 // ===== Word 导出（图片自动缩放适应页面） =====
