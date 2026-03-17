@@ -271,11 +271,14 @@ container.querySelectorAll(".card").forEach(card => {
         const title = h3.textContent.trim();
 
         if(rightText){
-            h3.innerHTML = `
-<table style="width:100%;border-collapse:collapse;">
+           h3.innerHTML = `
+<table style="width:100%;border-collapse:collapse;background:#f5f7fa;">
 <tr>
-<td style="text-align:left;border:none;">${title}</td>
-<td style="text-align:right;font-size:14px;font-weight:normal;border:none;white-space:nowrap;">
+<td style="width:6px;background:#2d8cf0;"></td>
+<td style="padding:6px 10px;text-align:left;border:none;font-weight:bold;">
+${title}
+</td>
+<td style="padding:6px 10px;text-align:right;font-size:14px;font-weight:normal;border:none;white-space:nowrap;">
 ${rightText}
 </td>
 </tr>
@@ -306,9 +309,7 @@ width:19.2cm;
 margin-left:-1.2cm;
 }
 h3{
-font-size:18px;
-font-weight:bold;
-margin:10px 0;
+margin:0 0 10px 0;
 font-family:SimSun;
 }
 .day-title{
