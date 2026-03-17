@@ -3,16 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>旅游行程生成器</title>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/awesomplete/awesomplete.css">
-<script src="https://cdn.jsdelivr.net/npm/awesomplete/awesomplete.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-
 <style>
 body{font-family:"Microsoft YaHei";background:#f5f7fa;margin:0;padding:30px;}
-h2{margin-bottom:20px;}
-.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+h2{margin-bottom:20px;text-align:center;color:#2c3e50;}
+.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
 input,select{padding:8px;border:1px solid #dcdfe6;border-radius:6px;}
 button{padding:8px 16px;background:#409eff;color:#fff;border:none;border-radius:6px;cursor:pointer;}
 button.secondary{background:#67c23a;}
@@ -22,229 +16,179 @@ button.gray{background:#909399;}
 .row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
 .row input{flex:1;min-width:150px;}
 .inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-.summary-box{background:#eef4ff;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center;}
-.cover img{width:100%;height:260px;object-fit:cover;border-radius:10px;margin-bottom:20px;}
-.outline,.extra-box{background:#fff;padding:15px;border-radius:10px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
-#output{max-width:800px;margin:auto;}
-#qrcodeBox{display:none;text-align:center;margin-top:20px;border-top:1px dashed #ddd;padding-top:15px;}
+.imgs{display:flex;gap:10px;margin:6px 0;justify-content:center;}
+.imgs img{width:48%;height:180px;object-fit:cover;border-radius:6px;}
+.suggest{background:#fff;border:1px solid #ddd;position:absolute;z-index:10;width:200px;}
+.suggest div{padding:6px;cursor:pointer;}
+.suggest div:hover{background:#eee;}
 </style>
 </head>
-
 <body>
-
 <h2>旅游行程生成器</h2>
 
 <div class="top-bar">
-  <label>行程天数</label>
-  <input type="number" id="days" value="3">
-  <button onclick="createInputs()">生成输入框</button>
-  <div style="flex:1"></div>
-  <button class="secondary" onclick="build()">生成行程</button>
-  <button class="gray" onclick="makeLink()">生成链接</button>
-  <button onclick="exportImage()">生成长图</button>
+<label>行程天数</label>
+<input type="number" id="days" value="3">
+<button onclick="createInputs()">生成输入框</button>
+<div style="flex:1"></div>
+<button class="secondary" onclick="build()">生成行程</button>
+<button class="gray" onclick="makeLink()">生成链接</button>
+<button onclick="exportWord()">导出 Word</button>
 </div>
 
 <div id="inputArea"></div>
 <hr>
 <div id="output"></div>
 
-<!-- 二维码 -->
-<div id="qrcodeBox">
-  <canvas id="qrcode"></canvas>
-  <div style="margin-top:10px;color:#666;">
-    XXX旅行社<br>
-    咨询电话：13800000000
-  </div>
-</div>
-
 <script>
-// ====== 全局变量 ======
-let spotData = {}  // {name:{content,img}}
-let imageData = {}
-let spotNames = []
+// ===== 全局变量 =====
+let spotData={}, imageData={}, spotNames=[];
 
-// ====== 加载 JSON 数据 ======
+// ===== 加载 JSON 数据 =====
 async function loadData(){
-    const spots = await fetch("spots.json").then(r=>r.json())
-    const images = await fetch("images.json").then(r=>r.json())
+    const spots = await fetch("spots.json").then(r=>r.json());
+    const images = await fetch("images.json").then(r=>r.json());
 
-    images.forEach(i=>{
-        imageData[i.name] = i.imageUrl
-    })
-
+    images.forEach(i=>{ imageData[i.name]=i.imageUrl; });
     spots.forEach(s=>{
-        spotData[s.name] = {
-            content: s.content,
-            img: imageData[s.name] || "https://picsum.photos/320/200?random="+Math.random()
-        }
-    })
+        spotData[s.name]={content:s.content,img:imageData[s.name]||"https://picsum.photos/320/200?random="+Math.random()};
+    });
 
-    spotNames = Object.keys(spotData).map(n=>`${n}（${spotData[n].content}）`)
-
-    createInputs()
-    buildFromUrl()
+    spotNames = Object.keys(spotData);
+    createInputs();
+    bindSuggest();
+    buildFromUrl();
 }
 
-// ====== 生成输入框 ======
+// ===== 生成输入框 =====
 function createInputs(){
-  const n = document.getElementById("days").value
-  const area = document.getElementById("inputArea")
-  area.innerHTML = ""
-
-  for(let i=1;i<=n;i++){
-    area.innerHTML += `
-      <div class="card">
-        <div class="day-title">第${i}天</div>
-        <div class="row">
-          <input class="spotInput" placeholder="景点1">
-          <input class="spotInput" placeholder="景点2">
-          <input class="spotInput" placeholder="景点3">
-        </div>
-        <div class="inline">
-          <label>用餐</label>
-          <select>
-            <option>选择</option>
-            <option>早</option>
-            <option>中</option>
-            <option>晚</option>
-          </select>
-          <label>住宿</label>
-          <input placeholder="输入住宿">
-          <label>酒店</label>
-          <input placeholder="输入酒店">
-        </div>
-      </div>
-    `
-  }
-  initAutoComplete()
-  bindSpotInfo()
-}
-
-// ====== 自动提示 ======
-function initAutoComplete(){
-  document.querySelectorAll(".spotInput").forEach(input=>{
-    new Awesomplete(input,{
-      list: spotNames,
-      minChars: 1,
-      maxItems: 8,
-      autoFirst: true,
-      filter: function(text, inp){
-        return Awesomplete.FILTER_CONTAINS(text, inp.match(/[^（]+/)[0])
-      },
-      item: function(text, inp){
-        return Awesomplete.ITEM(text, inp.match(/[^（]+/)[0])
-      },
-      replace: function(text){
-        this.input.value = text.split("（")[0]
-      }
-    })
-  })
-}
-
-// ====== 鼠标悬停显示描述 ======
-function bindSpotInfo(){
-  document.querySelectorAll(".spotInput").forEach(input=>{
-    input.addEventListener("change", function(){
-      let match = spotData[this.value]
-      if(match) this.title = match.content
-    })
-  })
-}
-
-// ====== fuzzy 查找 ======
-function fuzzyMatch(name){
-  for(let k in spotData){
-    if(k.includes(name)||name.includes(k)){
-      return {name:k,...spotData[k]}
+    const n=document.getElementById("days").value;
+    const area=document.getElementById("inputArea");
+    area.innerHTML="";
+    for(let i=1;i<=n;i++){
+        area.innerHTML+=`
+        <div class="card day-line">
+            <div class="day-title">第${i}天</div>
+            <div class="row">
+                <input class="spotInput" placeholder="景点1"><div class="suggest"></div>
+                <input class="spotInput" placeholder="景点2"><div class="suggest"></div>
+                <input class="spotInput" placeholder="景点3"><div class="suggest"></div>
+            </div>
+            <div class="inline">
+                <label>用餐</label>
+                <select>
+                    <option>选择</option>
+                    <option>早</option>
+                    <option>中</option>
+                    <option>晚</option>
+                </select>
+                <label>住宿</label>
+                <input placeholder="输入住宿">
+                <label>酒店</label>
+                <input placeholder="输入酒店">
+            </div>
+        </div>`;
     }
-  }
-  return null
+    bindSuggest();
 }
 
-// ====== 构建行程 ======
+// ===== 模糊搜索提示 =====
+function bindSuggest(){
+    document.querySelectorAll(".spotInput").forEach(input=>{
+        const box=input.nextElementSibling;
+        input.addEventListener("input",()=>{
+            const v=input.value.trim();
+            if(!v){ box.innerHTML=""; return; }
+            const list=spotNames.filter(n=>n.includes(v)).slice(0,6);
+            box.innerHTML=list.map(n=>`<div>${n}</div>`).join("");
+            box.querySelectorAll("div").forEach(div=>{
+                div.onclick=()=>{
+                    input.value=div.innerText;
+                    box.innerHTML="";
+                };
+            });
+        });
+    });
+}
+
+// ===== fuzzy 查找 =====
+function fuzzyMatch(name){
+    for(let k in spotData){
+        if(k.includes(name)||name.includes(k)) return {name:k,...spotData[k]};
+    }
+    return null;
+}
+
+// ===== 构建行程 =====
 function build(){
-  const cards = document.querySelectorAll(".card")
-  const out = document.getElementById("output")
-  let html = ""
+    const lines=document.querySelectorAll(".day-line");
+    const out=document.getElementById("output");
+    let html="";
+    lines.forEach((line,i)=>{
+        const arr=[...line.querySelectorAll(".spotInput")].map(x=>x.value.trim()).filter(Boolean);
+        if(arr.length===0) return;
+        const selects=line.querySelectorAll("select");
+        const meals=selects[0].value;
+        const stay=line.querySelectorAll("input")[3].value;
+        const hotel=line.querySelectorAll("input")[4].value;
 
-  cards.forEach((card,i)=>{
-    const inputs = card.querySelectorAll("input")
-    const selects = card.querySelectorAll("select")
-    const spots = [inputs[0].value,inputs[1].value,inputs[2].value].filter(Boolean)
-    const meal = selects[0].value
-    const stay = inputs[3].value
-    const hotel = inputs[4].value
-
-    if(spots.length===0) return
-
-    html += `<div class="card"><h3>第${i+1}天</h3>`
-
-    spots.forEach((a,idx)=>{
-      const s = fuzzyMatch(a)
-      let imgs = ""
-      if(spots.length===1 || idx<2){
-        imgs = `
-          <div style="display:flex;gap:10px;margin:6px 0">
-            <img src="${s.img}" style="width:48%;height:180px;object-fit:cover;border-radius:6px">
-            <img src="${s.img}" style="width:48%;height:180px;object-fit:cover;border-radius:6px">
-          </div>`
-      }
-      html += `<div style="font-weight:bold">${s.name}</div>
-               <div>${s.content}</div>${imgs}`
-    })
-
-    html += `<div>用餐：${meal}</div><div>住宿：${stay}</div><div>酒店：${hotel}</div>`
-    html += `</div>`
-  })
-
-  out.innerHTML = html
+        html+=`<div class="card"><h3>第${i+1}天</h3>`;
+        arr.forEach((a,idx)=>{
+            const s=fuzzyMatch(a);
+            if(!s){ html+=`<div>${a}</div>`; return; }
+            let imgs="";
+            if(arr.length===1||idx<2){
+                imgs=`<div class="imgs">
+                    <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
+                    <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
+                </div>`;
+            }
+            html+=`<div class="spot-name">${s.name}</div>
+                   <div class="desc">${s.content}</div>${imgs}`;
+        });
+        html+=`<div>用餐：${meals}</div><div>住宿：${stay}</div><div>酒店：${hotel}</div>`;
+        html+="</div>";
+    });
+    out.innerHTML=html;
 }
 
-// ====== 分享链接 ======
+// ===== 分享链接 =====
 function makeLink(){
-  build()
-  const data = encodeURIComponent(document.getElementById("output").innerHTML)
-  const url = location.origin+location.pathname+"?view=1&data="+data
-  prompt("复制链接", url)
+    build();
+    const data=encodeURIComponent(document.getElementById("output").innerHTML);
+    const url=location.origin+location.pathname+"?view=1&data="+data;
+    prompt("复制链接",url);
 }
 
-// ====== 从分享链接显示 ======
+// ===== 分享链接显示 =====
 function buildFromUrl(){
-  const params = new URLSearchParams(location.search)
-  if(!params.toString()) return
-  if(params.get("view")!=="1") return
-
-  document.querySelector(".top-bar").style.display="none"
-  document.getElementById("inputArea").style.display="none"
-  document.getElementById("output").innerHTML = decodeURIComponent(params.get("data"))
+    const params=new URLSearchParams(location.search);
+    if(!params.toString()) return;
+    if(params.get("view")!=="1") return;
+    document.querySelector(".top-bar").style.display="none";
+    document.getElementById("inputArea").style.display="none";
+    document.getElementById("output").innerHTML=decodeURIComponent(params.get("data"));
 }
 
-// ====== 导出长图 ======
-function exportImage(){
-  build()
-  const el = document.getElementById("output")
-  const qrBox = document.getElementById("qrcodeBox")
-  const canvasEl = document.getElementById("qrcode")
-  const data = encodeURIComponent(el.innerHTML)
-  const url = location.origin+location.pathname+"?view=1&data="+data
-
-  QRCode.toCanvas(canvasEl,url,function(){
-    qrBox.style.display="block"
-    el.appendChild(qrBox)
-
-    html2canvas(el,{scale:2,useCORS:true}).then(canvas=>{
-      const link=document.createElement("a")
-      link.download="行程海报.png"
-      link.href=canvas.toDataURL()
-      link.click()
-      qrBox.style.display="none"
-    })
-  })
+// ===== Word 导出（图片自动缩放适应页面） =====
+function exportWord(){
+    build();
+    const content=document.getElementById("output").innerHTML;
+    // 添加样式使图片不超出页面
+    const htmlContent = `
+    <html><head><meta charset="utf-8"><style>
+    img{max-width:100%;height:auto;margin:5px 0;display:block;}
+    </style></head><body>${content}</body></html>`;
+    const blob=new Blob(['\ufeff',htmlContent],{type:'application/msword'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='行程.doc';
+    a.click();
 }
 
-// ====== 初始化 ======
-loadData()
-
+// ===== 初始化 =====
+loadData();
 </script>
 </body>
 </html>
