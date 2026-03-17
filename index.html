@@ -211,22 +211,25 @@ function build(){
     out.innerHTML=html;
 }
 
-// ===== 分享链接 =====
+// 生成链接
 function makeLink(){
     build();
-    const data=encodeURIComponent(document.getElementById("output").innerHTML);
-    const url=location.origin+location.pathname+"?view=1&data="+data;
-    prompt("复制链接",url);
+    const data = btoa(unescape(encodeURIComponent(document.getElementById("output").innerHTML)));
+    const url = location.origin + location.pathname + "?view=1&data=" + data;
+    prompt("复制链接", url);
 }
 
-// ===== 分享链接显示 =====
+// 显示内容
 function buildFromUrl(){
-    const params=new URLSearchParams(location.search);
+    const params = new URLSearchParams(location.search);
     if(!params.toString()) return;
-    if(params.get("view")!=="1") return;
-    document.querySelector(".top-bar").style.display="none";
-    document.getElementById("inputArea").style.display="none";
-    document.getElementById("output").innerHTML=decodeURIComponent(params.get("data"));
+    if(params.get("view") !== "1") return;
+    document.querySelector(".top-bar").style.display = "none";
+    document.getElementById("inputArea").style.display = "none";
+    const data = params.get("data");
+    if(data){
+        document.getElementById("output").innerHTML = decodeURIComponent(escape(atob(data)));
+    }
 }
 
 // ===== Word 导出（图片自动缩放适应页面） =====
