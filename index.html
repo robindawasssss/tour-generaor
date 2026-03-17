@@ -236,7 +236,12 @@ return `
 })
 
 // 每天自动分页
-// 将景点名称和描述合并成一行显示，格式：【景点名称】景点描述
+content=content.replace(/<div class="card">/g,'<div class="card" style="page-break-after:always;">')
+
+// 先统一 class，保证后面合并匹配到
+content=content.replace(/class="desc"/g,'class="desc word-desc"')
+
+// 景点名称 + 描述合并成一行
 content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class="desc word-desc">([\s\S]*?)<\/div>/g,
     function(match, name, desc){
         return `<div class="desc word-desc">【${name}】${desc}</div>`;
