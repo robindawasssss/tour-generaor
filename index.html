@@ -137,7 +137,7 @@ function build(){
             const s=fuzzyMatch(a);
             if(!s){ html+=`<div>${a}</div>`; return; }
             let imgs="";
-            if(arr.length===1||idx<2){
+            if(arr.length>=1){
                 imgs=`<div class="imgs">
                     <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
                     <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
