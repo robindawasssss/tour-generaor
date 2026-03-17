@@ -211,28 +211,36 @@ function build(){
     out.innerHTML=html;
 }
 
-// ===== 生成链接 =====
+// 生成链接
 function makeLink(){
-    build();
+    build(); // 先生成行程内容
     const html = document.getElementById("output").innerHTML;
-    // 转 Base64
-    const data = btoa(unescape(encodeURIComponent(html)));
+    const data = btoa(unescape(encodeURIComponent(html))); // 转 Base64
     const url = location.origin + location.pathname + "?view=1&data=" + data;
     prompt("复制链接", url);
 }
 
-// ===== 从链接显示 =====
+// 从链接显示行程
 function buildFromUrl(){
     const params = new URLSearchParams(location.search);
-    if(params.get("view") !== "1") return;
+    if(params.get("view") !== "1") return; // 非分享模式，直接返回
     const data = params.get("data");
     if(!data) return;
 
-    // 确保 DOM 渲染后再赋值
+    // 等 DOM 渲染完成再处理
     window.addEventListener("DOMContentLoaded", ()=>{
-        document.querySelector(".top-bar").style.display = "none";
-        document.getElementById("inputArea").style.display = "none";
-        document.getElementById("output").innerHTML = decodeURIComponent(escape(atob(data)));
+        // 隐藏输入界面
+        const topBar = document.querySelector(".top-bar");
+        const inputArea = document.getElementById("inputArea");
+        if(topBar) topBar.style.display = "none";
+        if(inputArea) inputArea.style.display = "none";
+
+        // 显示行程
+        const output = document.getElementById("output");
+        if(output) output.innerHTML = decodeURIComponent(escape(atob(data)));
+
+        // 可选：自动滚动到内容
+        output.scrollIntoView({behavior:"smooth"});
     });
 }
 
