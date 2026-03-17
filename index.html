@@ -248,6 +248,35 @@ content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class
         return `<div class="desc word-desc"><span style="font-weight:bold; color:#2d8cf0;">【${name}】</span>${desc}</div>`;
     }
 );
+// 合并 用餐 / 住宿 / 酒店（空的不显示名称），右对齐
+content = content.replace(
+    /(<div class="extra-line">用餐：([\s\S]*?)<\/div>)?\s*
+     (<div class="extra-line">住宿：([\s\S]*?)<\/div>)?\s*
+     (<div class="extra-line">酒店：([\s\S]*?)<\/div>)?/g,
+    function(match, m1, meal, m2, stay, m3, hotel){
+
+        let arr = [];
+
+        if(meal && meal.trim()){
+            arr.push(`用餐：${meal.trim()}`);
+        }
+
+        if(stay && stay.trim()){
+            arr.push(`住宿：${stay.trim()}`);
+        }
+
+        if(hotel && hotel.trim()){
+            arr.push(`酒店：${hotel.trim()}`);
+        }
+
+        // 全部为空，不显示
+        if(arr.length === 0) return "";
+
+        return `<div class="extra-line" style="text-align:right;">
+            ${arr.join("　　")}
+        </div>`;
+    }
+);
 
 // 标题样式
 content=content.replace(/<h3>/g,'<h3 class="day-title">')
