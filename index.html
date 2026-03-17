@@ -47,14 +47,20 @@ let spotData={}, imageData={}, spotNames=[];
 // ===== 加载 JSON 数据 =====
 async function loadData(){
     const spots = await fetch("spots.json").then(r=>r.json());
-    const images = await fetch("images.json").then(r=>r.json());
+const images = await fetch("images.json").then(r=>r.json());
 
-    images.forEach(i=>{ imageData[i.name]=i.imageUrl; });
-    spots.forEach(s=>{
-        spotData[s.name]={content:s.content,img:imageData[s.name]||"https://picsum.photos/320/200?random="+Math.random()};
-    });
+// 先生成 imageData
+images.forEach(i => { imageData[i.name] = i.imageUrl; });
 
-    spotNames = Object.keys(spotData);
+// 再生成 spotData
+spots.forEach(s => {
+  spotData[s.name] = {
+    content: s.content,
+    img: imageData[s.name] || "https://picsum.photos/320/200?random=" + Math.random()
+  };
+});
+
+spotNames = Object.keys(spotData);
     createInputs();
     bindSuggest();
     buildFromUrl();
@@ -114,7 +120,13 @@ function bindSuggest(){
 // ===== fuzzy 查找 =====
 function fuzzyMatch(name){
     for(let k in spotData){
-        if(k.includes(name)||name.includes(k)) return {name:k,...spotData[k]};
+        if(k.includes(name) || name.includes(k)){
+            return {
+                name: k,
+                content: spotData[k].content,
+                img: imageData[k] || spotData[k].img || "https://picsum.photos/320/200?random=" + Math.random()
+            };
+        }
     }
     return null;
 }
