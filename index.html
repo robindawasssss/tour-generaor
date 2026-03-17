@@ -248,7 +248,7 @@ container.querySelectorAll(".card").forEach(card => {
     let hotel = "";
 
     card.querySelectorAll(".extra-line").forEach(el=>{
-        const text = el.innerText.trim();
+    const text = el.textContent.replace(/\s/g,'').trim();
         if(text.startsWith("用餐")) meal = text.replace(/用餐[:：]/,'').trim();
         if(text.startsWith("住宿")) stay = text.replace(/住宿[:：]/,'').trim();
         if(text.startsWith("酒店")) hotel = text.replace(/酒店[:：]/,'').trim();
