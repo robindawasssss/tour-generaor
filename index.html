@@ -238,9 +238,9 @@ content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class
 content = content.replace(/<div class="card">([\s\S]*?)<\/div>/g, function(card){
 
     // 提取
-    let meal = (card.match(/用餐：([\s\S]*?)<\/div>/) || [,""])[1];
-    let stay = (card.match(/住宿：([\s\S]*?)<\/div>/) || [,""])[1];
-    let hotel = (card.match(/酒店：([\s\S]*?)<\/div>/) || [,""])[1];
+    let meal = (card.match(/<div class="extra-line">用餐：([\s\S]*?)<\/div>/) || [,""])[1];
+   let stay = (card.match(/<div class="extra-line">住宿：([\s\S]*?)<\/div>/) || [,""])[1];
+  let hotel = (card.match(/<div class="extra-line">酒店：([\s\S]*?)<\/div>/) || [,""])[1];
 
     // 删除原内容
     card = card.replace(/<div class="extra-line">用餐：[\s\S]*?<\/div>/g,'');
