@@ -5,7 +5,7 @@
 <title>旅游行程生成器</title>
 <style>
 body{font-family:"Microsoft YaHei";background:#f5f7fa;margin:0;padding:30px;}
-h2{text-align:center;color:#2c3e50;margin-bottom:20px;}
+h2{margin-bottom:20px;text-align:center;color:#2c3e50;}
 .top-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
 input,select{padding:8px;border:1px solid #dcdfe6;border-radius:6px;}
 button{padding:8px 16px;background:#409eff;color:#fff;border:none;border-radius:6px;cursor:pointer;}
@@ -17,7 +17,7 @@ button.gray{background:#909399;}
 .row input{flex:1;min-width:150px;}
 .inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .imgs{display:flex;gap:10px;margin:6px 0;justify-content:center;}
-.imgs img{width:48%;height:auto;object-fit:cover;border-radius:6px;}
+.imgs img{width:48%;height:180px;object-fit:cover;border-radius:6px;}
 .suggest{background:#fff;border:1px solid #ddd;position:absolute;z-index:10;width:200px;}
 .suggest div{padding:6px;cursor:pointer;}
 .suggest div:hover{background:#eee;}
@@ -136,18 +136,13 @@ function build(){
         arr.forEach((a,idx)=>{
             const s=fuzzyMatch(a);
             if(!s){ html+=`<div>${a}</div>`; return; }
-
             let imgs="";
-            // ===== 所有景点图片都显示，兼容 Word table =====
-            if(arr.length>=1){
-                imgs=`<table width="100%" style="table-layout:fixed;margin:5px 0;border-collapse:collapse;"><tr>`;
-                const imgList = [s.img,s.img]; // 两张图片
-                imgList.forEach(img=>{
-                    imgs+=`<td style="width:50%;padding:2px;"><img src="${img}" style="width:100%;height:auto;object-fit:cover;border-radius:4px;"></td>`;
-                });
-                imgs+=`</tr></table>`;
+            if(arr.length===1||idx<2){
+                imgs=`<div class="imgs">
+                    <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
+                    <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
+                </div>`;
             }
-
             html+=`<div class="spot-name">${s.name}</div>
                    <div class="desc">${s.content}</div>${imgs}`;
         });
@@ -175,7 +170,7 @@ function buildFromUrl(){
     document.getElementById("output").innerHTML=decodeURIComponent(params.get("data"));
 }
 
-// ===== Word 导出（使用 table 兼容 Word 页面） =====
+// ===== Word 导出（图片自动缩放适应页面） =====
 function exportWord(){
 
 let content=document.getElementById("output").innerHTML
