@@ -237,58 +237,6 @@ content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class
         return `<div class="desc word-desc"><span style="font-weight:bold; color:#2d8cf0;">【${name}】</span>${desc}</div>`;
     }
 );
-const container = document.createElement("div");
-container.innerHTML = content;
-
-container.querySelectorAll(".card").forEach(card => {
-
-    // 提取
-    let meal = "";
-    let stay = "";
-    let hotel = "";
-
-    card.querySelectorAll(".extra-line").forEach(el=>{
-    const text = el.textContent.replace(/\s/g,'').trim();
-        if(text.startsWith("用餐")) meal = text.replace(/用餐[:：]/,'').trim();
-        if(text.startsWith("住宿")) stay = text.replace(/住宿[:：]/,'').trim();
-        if(text.startsWith("酒店")) hotel = text.replace(/酒店[:：]/,'').trim();
-    });
-
-    // 删除原内容
-    card.querySelectorAll(".extra-line").forEach(el=>el.remove());
-
-    // 组合
-    let arr = [];
-    if(meal) arr.push(`用餐：${meal}`);
-    if(stay) arr.push(`住宿：${stay}`);
-    if(hotel) arr.push(`酒店：${hotel}`);
-
-    let rightText = arr.join("　　");
-
-    // 插入标题
-    const h3 = card.querySelector("h3");
-    if(h3){
-        const title = h3.textContent.trim();
-
-        if(rightText){
-           h3.innerHTML = `
-<table style="width:100%;border-collapse:collapse;background:#f5f7fa;">
-<tr>
-<td style="width:6px;background:#2d8cf0;"></td>
-<td style="padding:6px 10px;text-align:left;border:none;font-weight:bold;">
-${title}
-</td>
-<td style="padding:6px 10px;text-align:right;font-size:14px;font-weight:normal;border:none;white-space:nowrap;">
-${rightText}
-</td>
-</tr>
-</table>`;
-        }
-    }
-
-});
-
-content = container.innerHTML;
 
 
 
@@ -313,10 +261,12 @@ margin:0 0 10px 0;
 font-family:SimSun;
 }
 .day-title{
-background:#2d8cf0;
-color:#fff;
-padding:6px 10px;
+background:#eef4ff;   /* 浅蓝 */
+color:#333;           /* 深色字 */
+padding:8px 10px;
 font-size:18px;
+font-weight:bold;
+border-left:4px solid #2d8cf0; /* 可选：和下面蓝条呼应 */
 }
 .spot-name{
 font-weight:bold;
