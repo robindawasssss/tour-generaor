@@ -120,7 +120,7 @@ function createInputs(){
                     <option>晚</option>
                 </select>
                 <label>住宿</label>
-                <input placeholder="输入住宿">
+               <input class="stayInput" placeholder="输入住宿">
             </div>
         </div>`;
     }
@@ -189,8 +189,7 @@ function build(){
         if(arr.length===0) return;
         const selects=line.querySelectorAll("select");
         const meals=selects[0].value;
-        const stay=line.querySelectorAll("input")[3].value;
-
+        const stay = line.querySelector(".stayInput").value;
         html+=`<div class="card"><h3>第${i+1}天</h3>`;
         arr.forEach((a,idx)=>{
             const s=fuzzyMatch(a);
