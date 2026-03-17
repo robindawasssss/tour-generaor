@@ -4,20 +4,13 @@
 <meta charset="utf-8">
 <title>旅游行程生成器</title>
 
-<!-- 样式 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/awesomplete/awesomplete.css">
 <script src="https://cdn.jsdelivr.net/npm/awesomplete/awesomplete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
-body{
-  font-family:"Microsoft YaHei";
-  background:#f5f7fa;
-  margin:0;
-  padding:30px;
-}
-
+body{font-family:"Microsoft YaHei";background:#f5f7fa;margin:0;padding:30px;}
 h2{margin-bottom:20px;}
 .top-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
 input,select{padding:8px;border:1px solid #dcdfe6;border-radius:6px;}
@@ -65,14 +58,32 @@ button.gray{background:#909399;}
 </div>
 
 <script>
-// ====== 景点数据 ======
-let spotData = [
-  {name:"西湖", content:"杭州著名景点，湖光山色"},
-  {name:"乌镇", content:"江南水乡古镇，体验水乡生活"},
-  {name:"外滩", content:"上海标志性景点，外滩夜景"},
-  {name:"东方明珠", content:"上海电视塔，城市地标"}
-]
-let spotNames = spotData.map(s => `${s.name}（${s.content}）`)
+// ====== 全局变量 ======
+let spotData = {}  // {name:{content,img}}
+let imageData = {}
+let spotNames = []
+
+// ====== 加载 JSON 数据 ======
+async function loadData(){
+    const spots = await fetch("spots.json").then(r=>r.json())
+    const images = await fetch("images.json").then(r=>r.json())
+
+    images.forEach(i=>{
+        imageData[i.name] = i.imageUrl
+    })
+
+    spots.forEach(s=>{
+        spotData[s.name] = {
+            content: s.content,
+            img: imageData[s.name] || "https://picsum.photos/320/200?random="+Math.random()
+        }
+    })
+
+    spotNames = Object.keys(spotData).map(n=>`${n}（${spotData[n].content}）`)
+
+    createInputs()
+    buildFromUrl()
+}
 
 // ====== 生成输入框 ======
 function createInputs(){
@@ -85,10 +96,9 @@ function createInputs(){
       <div class="card">
         <div class="day-title">第${i}天</div>
         <div class="row">
-          <input class="spotInput" placeholder="如：上海 → 杭州">
-        </div>
-        <div class="row">
-          <input class="spotInput"><input class="spotInput"><input class="spotInput">
+          <input class="spotInput" placeholder="景点1">
+          <input class="spotInput" placeholder="景点2">
+          <input class="spotInput" placeholder="景点3">
         </div>
         <div class="inline">
           <label>用餐</label>
@@ -99,9 +109,9 @@ function createInputs(){
             <option>晚</option>
           </select>
           <label>住宿</label>
-          <input>
+          <input placeholder="输入住宿">
           <label>酒店</label>
-          <input>
+          <input placeholder="输入酒店">
         </div>
       </div>
     `
@@ -135,10 +145,20 @@ function initAutoComplete(){
 function bindSpotInfo(){
   document.querySelectorAll(".spotInput").forEach(input=>{
     input.addEventListener("change", function(){
-      let match = spotData.find(s=>s.name===this.value)
+      let match = spotData[this.value]
       if(match) this.title = match.content
     })
   })
+}
+
+// ====== fuzzy 查找 ======
+function fuzzyMatch(name){
+  for(let k in spotData){
+    if(k.includes(name)||name.includes(k)){
+      return {name:k,...spotData[k]}
+    }
+  }
+  return null
 }
 
 // ====== 构建行程 ======
@@ -146,44 +166,41 @@ function build(){
   const cards = document.querySelectorAll(".card")
   const out = document.getElementById("output")
   let html = ""
-  let routes = []
 
   cards.forEach((card,i)=>{
     const inputs = card.querySelectorAll("input")
     const selects = card.querySelectorAll("select")
-    const route = inputs[0].value
-    const spots = [inputs[1].value,inputs[2].value,inputs[3].value].filter(Boolean)
+    const spots = [inputs[0].value,inputs[1].value,inputs[2].value].filter(Boolean)
     const meal = selects[0].value
-    const stay = inputs[4].value
-    const hotel = inputs[5].value
+    const stay = inputs[3].value
+    const hotel = inputs[4].value
 
-    if(route) routes.push(route)
+    if(spots.length===0) return
 
     html += `<div class="card"><h3>第${i+1}天</h3>`
-    if(route) html += `<div><b>${route}</b></div>`
-    spots.forEach(s => html += `<div>${s}</div>`)
-    html += `<div>用餐：${meal}</div><div>住宿：${stay}</div><div>酒店：${hotel}</div></div>`
+
+    spots.forEach((a,idx)=>{
+      const s = fuzzyMatch(a)
+      let imgs = ""
+      if(spots.length===1 || idx<2){
+        imgs = `
+          <div style="display:flex;gap:10px;margin:6px 0">
+            <img src="${s.img}" style="width:48%;height:180px;object-fit:cover;border-radius:6px">
+            <img src="${s.img}" style="width:48%;height:180px;object-fit:cover;border-radius:6px">
+          </div>`
+      }
+      html += `<div style="font-weight:bold">${s.name}</div>
+               <div>${s.content}</div>${imgs}`
+    })
+
+    html += `<div>用餐：${meal}</div><div>住宿：${stay}</div><div>酒店：${hotel}</div>`
+    html += `</div>`
   })
 
-  let title = routes.length ? routes[0]+"等地 "+cards.length+"天"+(cards.length-1)+"晚行程" : ""
-  let summary = routes.map((r,i)=>`<div>D${i+1}：${r}</div>`).join("")
-
-  out.innerHTML = `
-    <div class="cover">
-      <img src="https://picsum.photos/1200/400">
-    </div>
-    <div class="summary-box">
-      <h2>${title}</h2>
-      <div style="color:#666;">精品旅游行程推荐</div>
-    </div>
-    <div class="outline"><h3>行程概览</h3>${summary}</div>
-    ${html}
-    <div class="extra-box"><h3>费用说明</h3><div>✔ 含：住宿、交通、导游</div><div>✘ 不含：个人消费</div></div>
-    <div class="extra-box"><h3>温馨提示</h3><div>请携带身份证，注意安全</div></div>
-  `
+  out.innerHTML = html
 }
 
-// ====== 生成分享链接 ======
+// ====== 分享链接 ======
 function makeLink(){
   build()
   const data = encodeURIComponent(document.getElementById("output").innerHTML)
@@ -191,14 +208,15 @@ function makeLink(){
   prompt("复制链接", url)
 }
 
-// ====== 查看分享链接 ======
-function checkView(){
-  const p = new URLSearchParams(location.search)
-  if(p.get("view")==="1"){
-    document.querySelector(".top-bar").style.display="none"
-    document.getElementById("inputArea").style.display="none"
-    document.getElementById("output").innerHTML = decodeURIComponent(p.get("data"))
-  }
+// ====== 从分享链接显示 ======
+function buildFromUrl(){
+  const params = new URLSearchParams(location.search)
+  if(!params.toString()) return
+  if(params.get("view")!=="1") return
+
+  document.querySelector(".top-bar").style.display="none"
+  document.getElementById("inputArea").style.display="none"
+  document.getElementById("output").innerHTML = decodeURIComponent(params.get("data"))
 }
 
 // ====== 导出长图 ======
@@ -225,8 +243,7 @@ function exportImage(){
 }
 
 // ====== 初始化 ======
-createInputs()
-checkView()
+loadData()
 
 </script>
 </body>
