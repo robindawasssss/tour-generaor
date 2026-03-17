@@ -239,15 +239,15 @@ content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class
 );
 content = content.replace(/<div class="card">([\s\S]*?)<\/div>/g, function(card){
 
-    // ✅ 提取（匹配真实结构）
-    let meal = (card.match(/<div>\s*用餐[:：]([\s\S]*?)<\/div>/) || [,""])[1];
-    let stay = (card.match(/<div>\s*住宿[:：]([\s\S]*?)<\/div>/) || [,""])[1];
-    let hotel = (card.match(/<div>\s*酒店[:：]([\s\S]*?)<\/div>/) || [,""])[1];
+// ✅ 提取
+let meal = (card.match(/<div class="extra-line">\s*用餐[:：]([\s\S]*?)<\/div>/) || [,""])[1];
+let stay = (card.match(/<div class="extra-line">\s*住宿[:：]([\s\S]*?)<\/div>/) || [,""])[1];
+let hotel = (card.match(/<div class="extra-line">\s*酒店[:：]([\s\S]*?)<\/div>/) || [,""])[1];
 
-    // ✅ 删除原内容（关键！）
-    card = card.replace(/<div>\s*用餐[:：][\s\S]*?<\/div>/g,'');
-    card = card.replace(/<div>\s*住宿[:：][\s\S]*?<\/div>/g,'');
-    card = card.replace(/<div>\s*酒店[:：][\s\S]*?<\/div>/g,'');
+// ✅ 删除
+card = card.replace(/<div class="extra-line">\s*用餐[:：][\s\S]*?<\/div>/g,'');
+card = card.replace(/<div class="extra-line">\s*住宿[:：][\s\S]*?<\/div>/g,'');
+card = card.replace(/<div class="extra-line">\s*酒店[:：][\s\S]*?<\/div>/g,'');
 
     // ✅ 组合
     let arr = [];
