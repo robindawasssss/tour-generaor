@@ -119,8 +119,21 @@ function bindSuggest(){
 
 // ===== fuzzy 查找 =====
 function fuzzyMatch(name){
+    name = name.trim();
+    if(!name) return null;
+
     for(let k in spotData){
-        if(k.includes(name) || name.includes(k)){
+        // 检查是否有连续3个字符匹配
+        let matched = false;
+        for(let i=0; i<=name.length-3; i++){
+            const sub = name.substr(i,3); // 当前连续3个字符
+            if(k.includes(sub)){
+                matched = true;
+                break;
+            }
+        }
+
+        if(matched){
             return {
                 name: k,
                 content: spotData[k].content,
@@ -128,6 +141,7 @@ function fuzzyMatch(name){
             };
         }
     }
+
     return null;
 }
 
