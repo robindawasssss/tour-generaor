@@ -236,15 +236,16 @@ return `
 })
 
 // 每天自动分页
-content=content.replace(/<div class="card">/g,'<div class="card" style="page-break-after:always;">')
+// 每天自动分页
+content = content.replace(/<div class="card">/g,'<div class="card" style="page-break-after:always;">')
 
 // 先统一 class，保证后面合并匹配到
-content=content.replace(/class="desc"/g,'class="desc word-desc"')
+content = content.replace(/class="desc"/g,'class="desc word-desc"')
 
-// 景点名称 + 描述合并成一行
+// 景点名称 + 描述合并成一行，名称加粗并蓝色
 content = content.replace(/<div class="spot-name">([\s\S]*?)<\/div>\s*<div class="desc word-desc">([\s\S]*?)<\/div>/g,
     function(match, name, desc){
-        return `<div class="desc word-desc">【${name}】${desc}</div>`;
+        return `<div class="desc word-desc"><span style="font-weight:bold; color:#2d8cf0;">【${name}】</span>${desc}</div>`;
     }
 );
 
