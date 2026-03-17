@@ -220,24 +220,29 @@ function makeLink(){
     prompt("复制链接", url);
 }
 
-// ===== 显示分享内容 =====
+// 生成链接
+function makeLink(){
+    build();
+    const html = document.getElementById("output").innerHTML;
+    const base64 = btoa(encodeURIComponent(html)); // URL安全
+    const url = location.origin + location.pathname + "?view=1&data=" + base64;
+    prompt("复制链接", url);
+}
+
+// 显示分享内容
 function buildFromUrl(){
     const params = new URLSearchParams(location.search);
-    if(!params.toString()) return;
     if(params.get("view") !== "1") return;
 
-    // 隐藏输入区和按钮
-    const topBar = document.querySelector(".top-bar");
-    if(topBar) topBar.style.display = "none";
-    const inputArea = document.getElementById("inputArea");
-    if(inputArea) inputArea.style.display = "none";
+    document.querySelector(".top-bar").style.display = "none";
+    document.getElementById("inputArea").style.display = "none";
 
-    // 显示分享内容
     const data = params.get("data");
     if(data){
-        try{
-            document.getElementById("output").innerHTML = decodeURIComponent(atob(data));
-        }catch(e){
+        try {
+            const html = decodeURIComponent(atob(data));
+            document.getElementById("output").innerHTML = html;
+        } catch(e){
             console.error("分享数据解析失败", e);
             document.getElementById("output").innerHTML = "<p>分享数据损坏或无法解析</p>";
         }
