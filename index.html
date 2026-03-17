@@ -211,11 +211,20 @@ function build(){
     out.innerHTML=html;
 }
 
-// ===== 分享链接显示 =====
+// ===== 生成链接 =====
+function makeLink(){
+    build(); // 先生成行程内容
+    const html = document.getElementById("output").innerHTML;
+    const base64 = btoa(encodeURIComponent(html)); // URL安全
+    const url = location.origin + location.pathname + "?view=1&data=" + base64;
+    prompt("复制链接", url);
+}
+
+// ===== 显示分享内容 =====
 function buildFromUrl(){
     const params = new URLSearchParams(location.search);
-    if(!params.toString()) return;         // 没有参数直接返回
-    if(params.get("view") !== "1") return; // 不是分享模式也返回
+    if(!params.toString()) return;
+    if(params.get("view") !== "1") return;
 
     // 隐藏输入区和按钮
     const topBar = document.querySelector(".top-bar");
@@ -223,20 +232,16 @@ function buildFromUrl(){
     const inputArea = document.getElementById("inputArea");
     if(inputArea) inputArea.style.display = "none";
 
-    // 显示分享的行程内容
+    // 显示分享内容
     const data = params.get("data");
     if(data){
         try{
-            document.getElementById("output").innerHTML = decodeURIComponent(escape(atob(data)));
+            document.getElementById("output").innerHTML = decodeURIComponent(atob(data));
         }catch(e){
             console.error("分享数据解析失败", e);
             document.getElementById("output").innerHTML = "<p>分享数据损坏或无法解析</p>";
         }
     }
-
-    // 可以给页面加个样式，让输出区域居中或宽度固定
-    const editor = document.querySelector(".editor");
-    if(editor) editor.style.padding = "20px 40px";
 }
 
 // ===== Word 导出（图片自动缩放适应页面） =====
