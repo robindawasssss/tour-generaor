@@ -131,9 +131,18 @@ function createInputs(){
                 <input class="city-to" placeholder="抵达城市" style="width:80px;">
             </div>
             <div class="row">
-                <input class="spotInput" placeholder="景点1"><div class="suggest"></div>
-                <input class="spotInput" placeholder="景点2"><div class="suggest"></div>
-                <input class="spotInput" placeholder="景点3"><div class="suggest"></div>
+                <div class="spot-wrapper">
+                    <input class="spotInput" placeholder="景点1">
+                    <div class="suggest"></div>
+                </div>
+                <div class="spot-wrapper">
+                    <input class="spotInput" placeholder="景点2">
+                    <div class="suggest"></div>
+                </div>
+                <div class="spot-wrapper">
+                    <input class="spotInput" placeholder="景点3">
+                    <div class="suggest"></div>
+                </div>
             </div>
             <div class="inline">
                 <label>用餐</label>
@@ -151,8 +160,8 @@ function createInputs(){
         </div>`;
     }
 
-    fillCities();    // 先填充城市
-    bindSuggest();   // 再绑定景点模糊搜索
+    fillCities();    // 填充城市
+    bindSuggest();   // 绑定模糊搜索
 }
 
 function fillCities(){
