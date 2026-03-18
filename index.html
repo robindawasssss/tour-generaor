@@ -286,12 +286,10 @@ function build(){
         const meals = selects[0].value;
         const stay = line.querySelector(".stayInput").value;
 
-        html += `<div class="card"><h3>第${i+1}天</h3>`;
-
-        // ===== 添加行程显示 =====
+        // ===== 标题加出发→抵达城市 =====
         const from = line.querySelector(".city-from").value;
         const to = line.querySelector(".city-to").value;
-        html += `<div class="extra-line">行程：${from} → ${to}</div>`;
+        html += `<div class="card"><h3 class="day-title">第${i+1}天 ${from} → ${to}</h3>`;
 
         // ===== 景点显示 =====
         arr.forEach(a => {
