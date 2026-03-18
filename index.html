@@ -272,34 +272,53 @@ function fuzzyMatch(name){
 
 // ===== 构建行程 =====
 function build(){
-    const lines=document.querySelectorAll(".day-line");
-    const out=document.getElementById("output");
-    let html="";
-    lines.forEach((line,i)=>{
-        const arr=[...line.querySelectorAll(".spotInput")].map(x=>x.value.trim()).filter(Boolean);
-        if(arr.length===0) return;
-        const selects=line.querySelectorAll("select");
-        const meals=selects[0].value;
+    const lines = document.querySelectorAll(".day-line");
+    const out = document.getElementById("output");
+    let html = "";
+
+    lines.forEach((line, i) => {
+        const arr = [...line.querySelectorAll(".spotInput")]
+                    .map(x => x.value.trim())
+                    .filter(Boolean);
+        if(arr.length === 0) return;
+
+        const selects = line.querySelectorAll("select");
+        const meals = selects[0].value;
         const stay = line.querySelector(".stayInput").value;
-        html+=`<div class="card"><h3>第${i+1}天</h3>`;
-        arr.forEach((a,idx)=>{
-            const s=fuzzyMatch(a);
-            if(!s){ html+=`<div>${a}</div>`; return; }
-            let imgs="";
-            if(arr.length>=1){
-                imgs=`<div class="imgs">
-                    <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
-                    <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
-                </div>`;
+
+        html += `<div class="card"><h3>第${i+1}天</h3>`;
+
+        // ===== 添加行程显示 =====
+        const from = line.querySelector(".city-from").value;
+        const to = line.querySelector(".city-to").value;
+        html += `<div class="extra-line">行程：${from} → ${to}</div>`;
+
+        // ===== 景点显示 =====
+        arr.forEach(a => {
+            const s = fuzzyMatch(a);
+            if(!s){ 
+                html += `<div>${a}</div>`; 
+                return; 
             }
-            html+=`<div class="spot-name">${s.name}</div>
-                   <div class="desc">${s.content}</div>${imgs}`;
+            let imgs = "";
+            if(arr.length >= 1){
+                imgs = `<div class="imgs">
+                            <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
+                            <img src="${s.img}" style="width:48%;height:auto;max-height:180px;object-fit:cover;">
+                        </div>`;
+            }
+            html += `<div class="spot-name">${s.name}</div>
+                     <div class="desc">${s.content}</div>${imgs}`;
         });
-        html+=`<div class="extra-line">用餐：${meals}</div>
-<div class="extra-line">住宿：${stay}</div>`;
-        html+="</div>";
+
+        // ===== 用餐与住宿 =====
+        html += `<div class="extra-line">用餐：${meals}</div>
+                 <div class="extra-line">住宿：${stay}</div>`;
+
+        html += "</div>";
     });
-    out.innerHTML=html;
+
+    out.innerHTML = html;
 }
 
 // ===== 生成链接 =====
