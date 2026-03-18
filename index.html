@@ -121,7 +121,8 @@ spotNames = Object.keys(spotData);
 function createInputs(){
     const n = document.getElementById("days").value;
     const area = document.getElementById("inputArea");
-    area.innerHTML = "";
+    area.innerHTML = "";  // 清空之前的输入框
+
     for(let i=1; i<=n; i++){
         area.innerHTML += `
         <div class="card day-line">
@@ -151,7 +152,7 @@ function createInputs(){
     }
 
     fillCities();    // 先填充城市
-    bindSuggest();   // 再绑定模糊搜索
+    bindSuggest();   // 再绑定景点模糊搜索
 }
 
 function fillCities(){
@@ -194,7 +195,7 @@ function fillCities(){
 // ===== 模糊搜索提示 =====
 function bindSuggest(){
     document.querySelectorAll(".spotInput").forEach(input=>{
-        const box=input.nextElementSibling; // 每个输入框对应自己的提示框
+        const box=input.nextElementSibling;
         input.addEventListener("input",()=>{
             const v=input.value.trim();
             if(!v){ 
@@ -213,6 +214,14 @@ function bindSuggest(){
                 };
             });
         });
+
+        document.addEventListener("click", e=>{
+            if(!input.contains(e.target) && !box.contains(e.target)){
+                box.style.display = "none";
+            }
+        });
+    });
+}
 
         // 点击外部隐藏
         document.addEventListener("click", e=>{
