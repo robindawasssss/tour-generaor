@@ -149,8 +149,9 @@ function createInputs(){
             </div>
         </div>`;
     }
-    bindSuggest();
-    fillCities(); // 生成输入框后立即填充城市
+
+    fillCities();    // 先填充城市
+    bindSuggest();   // 再绑定模糊搜索
 }
 
 function fillCities(){
