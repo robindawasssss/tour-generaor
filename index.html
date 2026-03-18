@@ -17,9 +17,31 @@ button.gray{background:#909399;}
 .inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .imgs{display:flex;gap:10px;margin:6px 0;justify-content:center;}
 .imgs img{width:48%;height:180px;object-fit:cover;border-radius:6px;}
-.suggest{background:#fff;border:1px solid #ddd;position:absolute;z-index:10;width:200px;}
-.suggest div{padding:6px;cursor:pointer;}
-.suggest div:hover{background:#eee;}
+.spot-wrapper { 
+    position: relative; 
+    flex: 1; 
+}
+
+.suggest {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    z-index: 10;
+    width: 100%;
+    display: none;
+}
+
+.suggest div{
+    padding:6px;
+    cursor:pointer;
+}
+
+.suggest div:hover{
+    background:#eee;
+}
+    
     /* ===== A4 居中布局 ===== */
 body{
     font-family:"Microsoft YaHei";
@@ -105,22 +127,22 @@ function createInputs(){
         <div class="card day-line">
             <div class="day-title">第${i}天</div>
             <div class="row">
-                <input class="spotInput" placeholder="景点1"><div class="suggest"></div>
-                <input class="spotInput" placeholder="景点2"><div class="suggest"></div>
-                <input class="spotInput" placeholder="景点3"><div class="suggest"></div>
+                <div class="spot-wrapper"><input class="spotInput" placeholder="景点1"><div class="suggest"></div></div>
+                <div class="spot-wrapper"><input class="spotInput" placeholder="景点2"><div class="suggest"></div></div>
+                <div class="spot-wrapper"><input class="spotInput" placeholder="景点3"><div class="suggest"></div></div>
             </div>
             <div class="inline">
                 <label>用餐</label>
                 <select>
                   <option>/</option>
-                    <option>早</option>
-                    <option>早中</option>
-                    <option>早中晚</option>
-                    <option>中晚</option>
-                    <option>晚</option>
+                  <option>早</option>
+                  <option>早中</option>
+                  <option>早中晚</option>
+                  <option>中晚</option>
+                  <option>晚</option>
                 </select>
                 <label>住宿</label>
-               <input class="stayInput" placeholder="输入住宿">
+                <input class="stayInput" placeholder="输入住宿">
             </div>
         </div>`;
     }
@@ -130,18 +152,31 @@ function createInputs(){
 // ===== 模糊搜索提示 =====
 function bindSuggest(){
     document.querySelectorAll(".spotInput").forEach(input=>{
-        const box=input.nextElementSibling;
+        const box=input.nextElementSibling; // 每个输入框对应自己的提示框
         input.addEventListener("input",()=>{
             const v=input.value.trim();
-            if(!v){ box.innerHTML=""; return; }
+            if(!v){ 
+                box.style.display = "none";
+                box.innerHTML=""; 
+                return; 
+            }
             const list=spotNames.filter(n=>n.includes(v)).slice(0,6);
             box.innerHTML=list.map(n=>`<div>${n}</div>`).join("");
+            box.style.display = "block";
             box.querySelectorAll("div").forEach(div=>{
                 div.onclick=()=>{
                     input.value=div.innerText;
+                    box.style.display = "none";
                     box.innerHTML="";
                 };
             });
+        });
+
+        // 点击外部隐藏
+        document.addEventListener("click", e=>{
+            if(!input.contains(e.target) && !box.contains(e.target)){
+                box.style.display = "none";
+            }
         });
     });
 }
