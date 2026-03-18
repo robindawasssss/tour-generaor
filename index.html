@@ -125,10 +125,9 @@ function createInputs(){
     for(let i=1; i<=n; i++){
         area.innerHTML += `
         <div class="card day-line">
-            <div class="day-title">
-                第${i}天
-                <input class="startCity" placeholder="出发城市" style="width:80px;margin-left:10px;">
-                <input class="endCity" placeholder="抵达城市" style="width:80px;margin-left:5px;">
+            <div class="day-title">第${i}天 
+                <input class="city-from" placeholder="出发城市" style="width:80px;"> - 
+                <input class="city-to" placeholder="抵达城市" style="width:80px;">
             </div>
             <div class="row">
                 <input class="spotInput" placeholder="景点1"><div class="suggest"></div>
@@ -151,38 +150,47 @@ function createInputs(){
         </div>`;
     }
     bindSuggest();
-    fillCities(); // 自动填充城市
 }
-    function fillCities() {
+    function fillCities(){
     const lines = document.querySelectorAll(".day-line");
     const n = lines.length;
-
-    for(let i=0; i<n; i++){
-        const line = lines[i];
-        const startInput = line.querySelector(".startCity");
-        const endInput = line.querySelector(".endCity");
+    lines.forEach((line, i) => {
+        const fromInput = line.querySelector(".city-from");
+        const toInput = line.querySelector(".city-to");
         const stayInput = line.querySelector(".stayInput");
 
-        // 出发城市
-        if(i === 0){
-            startInput.value = "青岛";
-        } else {
+        // 第一天出发城市默认青岛
+        if(i === 0) fromInput.value = "青岛";
+
+        // 前一天住宿作为下一天出发
+        if(i > 0){
             const prevStay = lines[i-1].querySelector(".stayInput").value;
-            startInput.value = prevStay || "";
+            fromInput.value = prevStay || "";
         }
 
-        // 抵达城市
-        endInput.value = stayInput.value || (i === n-1 ? "青岛" : "");
+        // 当天住宿作为抵达城市（最后一天特殊处理）
+        if(i === n-1){
+            toInput.value = "青岛";
+        } else {
+            toInput.value = stayInput.value || "";
+        }
 
-        // 当住宿改变时，自动更新当天抵达和下一天出发
-        stayInput.addEventListener("input", ()=>{
-            endInput.value = stayInput.value;
-            if(i+1 < n){
-                const nextStart = lines[i+1].querySelector(".startCity");
-                nextStart.value = stayInput.value;
+        // 当住宿输入框变化时，更新下一天的出发城市
+        stayInput.addEventListener("input", () => {
+            if(i < n-1){
+                lines[i+1].querySelector(".city-from").value = stayInput.value;
+            }
+            if(i === n-1){
+                toInput.value = "青岛";
+            } else {
+                toInput.value = stayInput.value;
             }
         });
-    }
+    });
+}
+    createInputs();
+fillCities();
+    
 
     // 最后一天抵达城市固定青岛
     if(n>0){
