@@ -122,42 +122,38 @@ function createInputs(){
     const n = document.getElementById("days").value;
     const area = document.getElementById("inputArea");
     area.innerHTML = "";
-
     for(let i=1; i<=n; i++){
         area.innerHTML += `
         <div class="card day-line">
-            <div class="day-title">第${i}天</div>
+            <div class="day-title">
+                第${i}天
+                <input class="startCity" placeholder="出发城市" style="width:80px;margin-left:10px;">
+                <input class="endCity" placeholder="抵达城市" style="width:80px;margin-left:5px;">
+            </div>
             <div class="row">
                 <input class="spotInput" placeholder="景点1"><div class="suggest"></div>
                 <input class="spotInput" placeholder="景点2"><div class="suggest"></div>
                 <input class="spotInput" placeholder="景点3"><div class="suggest"></div>
             </div>
-            <div class="city-line inline">
-                <label>路线：</label>
-                <input class="startCity" placeholder="出发城市">
-                <span>-</span>
-                <input class="endCity" placeholder="抵达城市">
-            </div>
             <div class="inline">
                 <label>用餐</label>
                 <select>
-                    <option>/</option>
-                    <option>早</option>
-                    <option>早中</option>
-                    <option>早中晚</option>
-                    <option>中晚</option>
-                    <option>晚</option>
+                  <option>/</option>
+                  <option>早</option>
+                  <option>早中</option>
+                  <option>早中晚</option>
+                  <option>中晚</option>
+                  <option>晚</option>
                 </select>
                 <label>住宿</label>
                 <input class="stayInput" placeholder="输入住宿">
             </div>
         </div>`;
     }
-
     bindSuggest();
-    fillCities(); // 自动填充城市逻辑
+    fillCities(); // 自动填充城市
 }
-    function fillCities(){
+    function fillCities() {
     const lines = document.querySelectorAll(".day-line");
     const n = lines.length;
 
@@ -167,15 +163,18 @@ function createInputs(){
         const endInput = line.querySelector(".endCity");
         const stayInput = line.querySelector(".stayInput");
 
+        // 出发城市
         if(i === 0){
-            startInput.value = "青岛"; // 第一天出发城市
+            startInput.value = "青岛";
         } else {
             const prevStay = lines[i-1].querySelector(".stayInput").value;
             startInput.value = prevStay || "";
         }
 
+        // 抵达城市
         endInput.value = stayInput.value || (i === n-1 ? "青岛" : "");
 
+        // 当住宿改变时，自动更新当天抵达和下一天出发
         stayInput.addEventListener("input", ()=>{
             endInput.value = stayInput.value;
             if(i+1 < n){
@@ -185,10 +184,12 @@ function createInputs(){
         });
     }
 
+    // 最后一天抵达城市固定青岛
     if(n>0){
         lines[n-1].querySelector(".endCity").value = "青岛";
     }
 }
+
 // ===== 模糊搜索提示 =====
 function bindSuggest(){
     document.querySelectorAll(".spotInput").forEach(input=>{
