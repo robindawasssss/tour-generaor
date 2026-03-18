@@ -119,36 +119,76 @@ spotNames = Object.keys(spotData);
 
 // ===== 生成输入框 =====
 function createInputs(){
-    const n=document.getElementById("days").value;
-    const area=document.getElementById("inputArea");
-    area.innerHTML="";
-    for(let i=1;i<=n;i++){
-        area.innerHTML+=`
+    const n = document.getElementById("days").value;
+    const area = document.getElementById("inputArea");
+    area.innerHTML = "";
+
+    for(let i=1; i<=n; i++){
+        area.innerHTML += `
         <div class="card day-line">
             <div class="day-title">第${i}天</div>
             <div class="row">
-                <div class="spot-wrapper"><input class="spotInput" placeholder="景点1"><div class="suggest"></div></div>
-                <div class="spot-wrapper"><input class="spotInput" placeholder="景点2"><div class="suggest"></div></div>
-                <div class="spot-wrapper"><input class="spotInput" placeholder="景点3"><div class="suggest"></div></div>
+                <input class="spotInput" placeholder="景点1"><div class="suggest"></div>
+                <input class="spotInput" placeholder="景点2"><div class="suggest"></div>
+                <input class="spotInput" placeholder="景点3"><div class="suggest"></div>
+            </div>
+            <div class="city-line inline">
+                <label>路线：</label>
+                <input class="startCity" placeholder="出发城市">
+                <span>-</span>
+                <input class="endCity" placeholder="抵达城市">
             </div>
             <div class="inline">
                 <label>用餐</label>
                 <select>
-                  <option>/</option>
-                  <option>早</option>
-                  <option>早中</option>
-                  <option>早中晚</option>
-                  <option>中晚</option>
-                  <option>晚</option>
+                    <option>/</option>
+                    <option>早</option>
+                    <option>早中</option>
+                    <option>早中晚</option>
+                    <option>中晚</option>
+                    <option>晚</option>
                 </select>
                 <label>住宿</label>
                 <input class="stayInput" placeholder="输入住宿">
             </div>
         </div>`;
     }
-    bindSuggest();
-}
 
+    bindSuggest();
+    fillCities(); // 自动填充城市逻辑
+}
+    function fillCities(){
+    const lines = document.querySelectorAll(".day-line");
+    const n = lines.length;
+
+    for(let i=0; i<n; i++){
+        const line = lines[i];
+        const startInput = line.querySelector(".startCity");
+        const endInput = line.querySelector(".endCity");
+        const stayInput = line.querySelector(".stayInput");
+
+        if(i === 0){
+            startInput.value = "青岛"; // 第一天出发城市
+        } else {
+            const prevStay = lines[i-1].querySelector(".stayInput").value;
+            startInput.value = prevStay || "";
+        }
+
+        endInput.value = stayInput.value || (i === n-1 ? "青岛" : "");
+
+        stayInput.addEventListener("input", ()=>{
+            endInput.value = stayInput.value;
+            if(i+1 < n){
+                const nextStart = lines[i+1].querySelector(".startCity");
+                nextStart.value = stayInput.value;
+            }
+        });
+    }
+
+    if(n>0){
+        lines[n-1].querySelector(".endCity").value = "青岛";
+    }
+}
 // ===== 模糊搜索提示 =====
 function bindSuggest(){
     document.querySelectorAll(".spotInput").forEach(input=>{
