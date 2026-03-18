@@ -150,8 +150,10 @@ function createInputs(){
         </div>`;
     }
     bindSuggest();
+    fillCities(); // 生成输入框后立即填充城市
 }
-    function fillCities(){
+
+function fillCities(){
     const lines = document.querySelectorAll(".day-line");
     const n = lines.length;
     lines.forEach((line, i) => {
@@ -188,15 +190,6 @@ function createInputs(){
         });
     });
 }
-    
-
-    // 最后一天抵达城市固定青岛
-    if(n>0){
-        lines[n-1].querySelector(".endCity").value = "青岛";
-    }
-}
-createInputs();
-fillCities();
 // ===== 模糊搜索提示 =====
 function bindSuggest(){
     document.querySelectorAll(".spotInput").forEach(input=>{
